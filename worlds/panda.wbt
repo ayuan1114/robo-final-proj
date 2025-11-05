@@ -1,0 +1,192 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/Floor.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/BakelitePlastic.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Plaster.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/tables/protos/Table.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/BrushedAluminium.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Parquetry.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/tools/protos/Bolt.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/solids/protos/SolidBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Copper.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/OldSteel.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/containers/protos/PlasticCrate.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Wall.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/franka_emika/panda/protos/Panda.proto"
+
+WorldInfo {
+  info [
+    "This example showcases Franka Emika's Panda robot in a factory setting."
+  ]
+  title "Panda demo"
+  basicTimeStep 16
+}
+DEF VIEWPOINT Viewpoint {
+  orientation -0.16008226853053803 -0.12512453847215296 0.9791412141127791 4.5767985999791945
+  position 0.4900709687115743 6.096958701522812 2.0121286008586043
+  ambientOcclusionRadius 1
+}
+TexturedBackground {
+  texture "factory"
+  skybox FALSE
+}
+Floor {
+  translation 0 2.4 0
+  size 6.95 5
+  tileSize 2 2
+  appearance BakelitePlastic {
+    color "braun"
+  }
+}
+DEF ROOF Pose {
+  translation 0.06 5.545 3.65
+  rotation 0 1 0 3.141592644
+  children [
+    Shape {
+      appearance Plaster {
+        textureTransform TextureTransform {
+          scale 5.7 5.05
+        }
+      }
+      geometry Plane {
+        size 7.2 11.36
+      }
+    }
+  ]
+}
+Table {
+  translation 0 2.64217 -2.62797e-05
+  rotation 0 0 1 1.5708
+  name "table(4)"
+  size 1.2 2.2 0.7
+  feetSize 0.05 0.05
+  trayAppearance Parquetry {
+    type "light strip"
+    colorOverride 0.933333 0.933333 0.92549
+  }
+  legAppearance BrushedAluminium {
+    colorOverride 0.333 0.341 0.325
+  }
+}
+Pose {
+  translation 0.1 2.75 -0.27
+  children [
+    SolidBox {
+      translation 6.128892248135619e-18 0 0.9999344802999999
+      rotation -0.7185360387213969 0.17244864929313325 0.673771047474984 1.030078720060441e-16
+      size 0.03 0.03 0.06
+      appearance Copper {
+      }
+      physics Physics {
+        density -1
+        mass 0.2
+      }
+    }
+    Pose {
+      translation 0.1 -0.1 0
+      children [
+        SolidBox {
+          translation -0.0008573967979189391 0.24365721862315848 0.9999344802999913
+          rotation 1.0286111614055e-09 5.52033802022146e-11 -1 0.00028781627047675876
+          name "box(2)"
+          size 0.03 0.03 0.06
+          appearance OldSteel {
+          }
+          physics Physics {
+            density -1
+            mass 0.2
+          }
+        }
+      ]
+    }
+  ]
+}
+Wall {
+  translation 0.035 -0.025 0
+  rotation 0 0 1 4.712388966
+  name "wall(21)"
+  size 0.2 7.2 3.65
+  appearance Plaster {
+    textureTransform TextureTransform {
+      scale 3.7 2.4
+    }
+  }
+}
+Panda {
+  hidden translation_1 -1.43225918769474e-06 -4.652136088237273e-08 -0.00013813816693719616
+  hidden rotation_1 -0.03252676166809339 0.9994708648870668 4.157642763943455e-06 2.8674253530020075e-05
+  hidden position_1_0 -2.333657315140473e-05
+  hidden linearVelocity_1 -1.05096388441775e-08 -4.176423521996967e-09 4.06150108521187e-11
+  hidden angularVelocity_1 -4.847758043175707e-09 -1.1220484622607614e-09 1.490212144061116e-08
+  hidden rotation_2 0 0 -1 2.3336569581442505e-05
+  hidden position_2_0 2.886388752291996e-05
+  hidden linearVelocity_2 8.831091084325548e-07 4.791448211876913e-07 -1.7149158975269445e-10
+  hidden angularVelocity_2 -9.879304854620665e-09 -7.382756488986452e-09 -0.00023333154855267473
+  hidden rotation_3 -0.9999999997917189 1.4431948475742383e-05 1.4431943759456045e-05 1.570796000208281
+  hidden position_3_0 2.319459330469001e-05
+  hidden linearVelocity_3 -7.577740356570055e-07 8.089411031581266e-07 -7.423116966057476e-11
+  hidden angularVelocity_3 -9.582068492071556e-09 -7.406842750659409e-09 -0.0002333200630429732
+  hidden rotation_4 0.9999999998655027 -1.1597300441243115e-05 1.1597296651305133e-05 1.5707960001344974
+  hidden position_4_0 -1.7000215542389367
+  hidden linearVelocity_4 1.0341765374852408e-08 4.9608803836707514e-08 9.181077549677064e-11
+  hidden angularVelocity_4 -1.0080522404928742e-08 1.040600292102743e-08 -1.376434656816143e-06
+  hidden rotation_5 0.5933504056939518 0.5691815211638124 -0.5691815984626275 2.070560219550487
+  hidden position_5_0 -1.5700007413446944
+  hidden linearVelocity_5 2.2262437077646006e-07 -4.082567185559941e-08 -2.1369288952808147e-09
+  hidden angularVelocity_5 -1.0064229492425847e-08 1.012462100006196e-08 -1.3745109901466633e-06
+  hidden rotation_6 -0.999775053219882 0.014997384875178762 0.014997379974110811 1.5710209720825505
+  hidden position_6_0 1.399997940870323
+  hidden linearVelocity_6 5.476838334525375e-07 5.31893521674605e-08 -3.817251253359959e-09
+  hidden angularVelocity_6 -1.0054921646111595e-08 1.0263891348595688e-08 -1.3732335059799592e-06
+  hidden rotation_7 0.642971294786854 -0.5415662959297102 0.5415661189486375 1.9987558614627725
+  hidden position_7_0 0.7850000031484661
+  hidden linearVelocity_7 6.771973078267149e-07 1.2377358022252026e-08 -5.067516134857747e-09
+  hidden angularVelocity_7 -1.0051935486308289e-08 1.0454849276651606e-08 -1.373011770717929e-06
+  hidden rotation_8 0.8629802822205643 -0.35725699147660167 0.3572568747268588 1.7176289601142982
+  hidden linearVelocity_8 7.000451633682515e-07 2.491631080707549e-09 -5.309527846031125e-09
+  hidden angularVelocity_8 -1.0050567348450726e-08 1.0512061454950228e-08 -1.373004390867996e-06
+  hidden position_9_0 4.416736308023413e-09
+  hidden position_9_1 -4.416736301954625e-09
+  hidden translation_10 0 4.416736308023413e-09 0.0584
+  hidden linearVelocity_10 6.852795963376485e-07 2.7259362267903032e-09 -5.199647468145942e-09
+  hidden angularVelocity_10 -1.0050568382232226e-08 1.0512294767307549e-08 -1.373004428816431e-06
+  hidden translation_11 0 4.416736301954625e-09 0.0584
+  hidden linearVelocity_11 6.852795963702039e-07 2.725936247538159e-09 -5.199647556963783e-09
+  hidden angularVelocity_11 -1.0050569883237465e-08 1.0512294827778078e-08 -1.3730044284000592e-06
+  translation -2.45568e-06 2.2 0.7
+  rotation 0 0 1 1.5708
+  controller "panda_controller"
+}
+Bolt {
+  translation 0.08 2.19 0.69
+  rotation 0.3574058186283875 0.8628565621288802 -0.35740681862788 1.71777
+  name "bolt(12)"
+  enablePhysics FALSE
+}
+Bolt {
+  translation -0.08 2.189 0.69
+  rotation -0.12942794302188446 -0.9831055672070398 0.12942894302144423 -1.58784
+  name "bolt(13)"
+  enablePhysics FALSE
+}
+Bolt {
+  translation 0.04 2.062 0.689
+  rotation 0.1294279597735375 -0.9831056944488314 -0.1294279597735375 -1.58784
+  name "bolt(14)"
+  enablePhysics FALSE
+}
+Bolt {
+  translation -0.04 2.0625 0.689
+  rotation 0.35740494636728165 -0.8628568705184134 -0.3574069463669815 -1.71777
+  name "bolt(15)"
+  enablePhysics FALSE
+}
+PlasticCrate {
+  translation -0.75 2.53 0.72
+  rotation 0 0 1 -0.261795307179586
+  name "plastic crate(2)"
+  size 0.5 0.5 0.2
+}
+Group {
+}
