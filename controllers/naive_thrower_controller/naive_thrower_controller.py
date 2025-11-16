@@ -43,8 +43,8 @@ def _safe_get_device(name):
     except Exception:
         return None
 
-gripper_left  = _safe_get_device("robotiq_2f85::left finger joint")
-gripper_right = _safe_get_device("robotiq_2f85::right finger joint")
+gripper_left  = _safe_get_device("robotiq_2f85_thrower::left finger joint")
+gripper_right = _safe_get_device("robotiq_2f85_thrower::right finger joint")
 
 if gripper_left and gripper_right:
     for g in (gripper_left, gripper_right):
@@ -133,12 +133,10 @@ while sup.step(timestep) != -1:
         motor.setPosition(cur_pose[j])
     set_gripper_normalized(cur_pose[-1])
 
-    if tt % 10 == 0:
-        print("-------------------" + str(tt))
-        print("Config: ", cur_pose)
-        print("End at: ", fk(cur_pose)[:3])
-        print("Rel block pos: ", np.array(block.getPosition()) - np.array(robot.getPosition()))
-        print("-----")
+    if tt % 50 == 0:
+        print(f"[{tt}] Thrower Config: ", cur_pose)
+        print(f"[{tt}] Thrower End: ", fk(cur_pose)[:3])
+        print(f"[{tt}] Thrower Block Pos: ", np.array(block.getPosition()) - np.array(robot.getPosition()))
 
     last_pose = cur_pose
     tt += 1

@@ -1,21 +1,16 @@
 """ur5e_controller controller."""
 
 from controller import Robot, Supervisor
+from ik import getDesiredRobotCommand, fk
 import numpy as np
-
-# ===== Optional: fast live preview with OpenCV =====
-try:
-    import cv2
-    _HAS_CV2 = True
-except Exception:
-    _HAS_CV2 = False
-    print("[camera] OpenCV not available; will skip live preview.")
 
 # -----------------------------------------------------------------------------
 # Init
 # -----------------------------------------------------------------------------
-robot = Supervisor()
-timestep = int(robot.getBasicTimeStep())
+sup = Supervisor()
+robot = sup.getFromDef("THROWER")
+block = sup.getFromDef("BLOCK")
+timestep = int(sup.getBasicTimeStep())
 
 # -----------------------------------------------------------------------------
 # UR5e arm joints (6-DoF)
@@ -28,7 +23,7 @@ arm_joint_names = [
     "wrist_2_joint",
     "wrist_3_joint",
 ]
-motors = [robot.getDevice(n) for n in arm_joint_names]
+motors = [sup.getDevice(n) for n in arm_joint_names]
 for m in motors:
     ps = m.getPositionSensor()
     ps.enable(timestep)
@@ -44,12 +39,12 @@ GRIP_MAX = 0.80  # typical range on actuated finger joints; adjust if needed
 
 def _safe_get_device(name):
     try:
-        return robot.getDevice(name)
+        return sup.getDevice(name)
     except Exception:
         return None
 
-gripper_left  = _safe_get_device("robotiq_2f85::left finger joint")
-gripper_right = _safe_get_device("robotiq_2f85::right finger joint")
+gripper_left  = _safe_get_device("robotiq_2f85_thrower::left finger joint")
+gripper_right = _safe_get_device("robotiq_2f85_thrower::right finger joint")
 
 if gripper_left and gripper_right:
     for g in (gripper_left, gripper_right):
@@ -58,7 +53,7 @@ if gripper_left and gripper_right:
         except Exception:
             pass
         try:
-            g.setForce(50.0)
+            g.setForce(100.0)
         except Exception:
             pass
     print("[gripper] Robotiq 2F-85 finger motors found.")
@@ -87,55 +82,61 @@ def set_gripper_width_mm(width_mm, max_open_mm=85.0):
     set_gripper_normalized(1.0 - width_mm / max_open_mm)
 
 # -----------------------------------------------------------------------------
-# Wrist camera (correct BGRA → BGR for OpenCV preview)
-# -----------------------------------------------------------------------------
-cam = _safe_get_device("wrist_camera")
-if cam:
-    cam.enable(timestep)
-    cam_w, cam_h = cam.getWidth(), cam.getHeight()
-    print(f"[camera] Enabled wrist_camera at {cam_w}x{cam_h}")
-else:
-    cam_w = cam_h = None
-    print("[camera] No device named 'wrist_camera' found.")
-
-def _camera_step_preview():
-    if not (cam and _HAS_CV2):
-        return
-    img_bytes = cam.getImage()
-    if img_bytes is None:
-        return
-    # Webots returns BGRA
-    bgra = np.frombuffer(img_bytes, dtype=np.uint8).reshape((cam_h, cam_w, 4))
-    bgr = cv2.cvtColor(bgra, cv2.COLOR_BGRA2BGR)
-    cv2.imshow("Wrist Camera", bgr)
-    if cv2.waitKey(1) & 0xFF == 27:  # ESC closes
-        cv2.destroyAllWindows()
-
-# -----------------------------------------------------------------------------
 # Main loop
 # -----------------------------------------------------------------------------
+
+BLOCK_START_POS = np.concatenate((np.array(block.getPosition()) - np.array(robot.getPosition()), [0,0,0]))
+
+BASE_POSE = [1.2, -1.2, 1.5, -2.0, -1.57, 1.03]
+ARM_TO_BLOCK = getDesiredRobotCommand(0, BLOCK_START_POS, BASE_POSE)
+START_THROW_POSE = [2.7, -1.2, 1.5, 0, -1.57, 1.57, 1.0]
+END_THROW_POSE = [2.7, -1.2, 1.5, -3, -1.57, 1.57, 0.0]
+THROW_TIME = 20  # timesteps over which to execute the throw
+
+
+def get_pose(t: int, last_pose):
+    if t < 50: 
+        return BASE_POSE + [0.0]
+    elif t < 100:
+        return np.concatenate((ARM_TO_BLOCK, [0.0]))
+    elif t < 150:
+        return np.concatenate((ARM_TO_BLOCK, [1.0]))
+    elif t < 200:
+        # Linearly interpolate from the position at t=150 to START_THROW_POSE over t in [150, 200)
+        frac = float(t - 150) / 50.0
+        # Compute the pose at t=150
+        pose_150 = np.concatenate((ARM_TO_BLOCK, [1.0]))
+        start = np.array(pose_150, dtype=float)
+        end = np.array(START_THROW_POSE, dtype=float)
+        joints = (1.0 - frac) * start + frac * end
+        return joints
+    elif t < 200 + THROW_TIME:
+        # linearly interpolate between START_THROW_POSE and END_THROW_POSE over t in [200, 200+THROW_TIME)
+        frac = float(t - 200) / THROW_TIME
+        start = np.array(START_THROW_POSE, dtype=float)
+        end = np.array(END_THROW_POSE, dtype=float)
+        joints = (1.0 - frac) * start + frac * end
+        return joints
+    else:
+        return END_THROW_POSE
+
 tt = 0
-try:
-    while robot.step(timestep) != -1:
-        # Example UR5e pose (replace with your planner)
-        desired_arm = [-0.343, -1.2, 1.5, -2.0, -1.57, 1.03]
-        for j, motor in enumerate(motors):
-            motor.setPosition(desired_arm[j])
+last_pose = BASE_POSE
 
-        # Demo gripper motion: close over 2s, hold to 4s, then open
-        t = robot.getTime()
-        if t < 2.0:
-            set_gripper_normalized(t / 2.0)   # ramp 0→1
-        elif t < 4.0:
-            set_gripper_normalized(1.0)       # closed
-        else:
-            set_gripper_width_mm(85.0)        # fully open
 
-        _camera_step_preview()
-        tt += 1
-finally:
-    if _HAS_CV2:
-        try:
-            cv2.destroyAllWindows()
-        except Exception:
-            pass
+while sup.step(timestep) != -1:
+
+    t = sup.getTime()
+
+    cur_pose = get_pose(tt, last_pose[:-1])
+    for j, motor in enumerate(motors):
+        motor.setPosition(cur_pose[j])
+    set_gripper_normalized(cur_pose[-1])
+
+    if tt % 50 == 0:
+        print(f"[{tt}] Thrower Config: ", cur_pose)
+        print(f"[{tt}] Thrower End: ", fk(cur_pose)[:3])
+        print(f"[{tt}] Thrower Block Pos: ", np.array(block.getPosition()) - np.array(robot.getPosition()))
+
+    last_pose = cur_pose
+    tt += 1
