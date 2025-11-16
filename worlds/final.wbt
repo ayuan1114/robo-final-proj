@@ -9,6 +9,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Parquetry.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Wall.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/devices/robotiq/protos/Robotiq2f85Gripper.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/solids/protos/SolidBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Copper.proto"
 EXTERNPROTO "../protos/UR5e.proto"
 
 WorldInfo {
@@ -23,22 +25,17 @@ DEF VIEWPOINT Viewpoint {
   position 2.4137971053182143 3.7122954316877914 1.2693671060064997
   ambientOcclusionRadius 1
 }
-Transform {
-  translation 0.1 2.9 0.75
-  children [
-    Shape {
-      appearance Appearance {
-        material Material {
-          emissiveColor 0.8 0 0
-        }
-      }
-      geometry Box {
-        size 0.05 0.05 0.05
-      }
-    }
-  ]
+DEF BLOCK SolidBox {
+  translation 1 2.8 0.75
+  size 0.03 0.03 0.06
+  appearance Copper {
+  }
+  physics Physics {
+    density -1
+    mass 0.2
+  }
 }
-UR5e {
+DEF THROWER UR5e {
   hidden position_0_0 -0.5425930953611413
   hidden translation_1 0 0 0.163
   hidden rotation_1 0 0 -1 0.5425930953611415
@@ -69,9 +66,9 @@ UR5e {
   hidden rotation_15 -1 0 0 1.0762435237836832e-05
   hidden translation_17 0 0.0127 0.06142
   hidden rotation_17 1 0 0 8.930508451208434e-06
-  translation 0 2.2 0.7
-  rotation 0 0 1 1.570846325
-  controller "thrower_controller"
+  translation 1 2.2 0.7
+  rotation 0 0 1 0
+  controller "naive_thrower_controller"
   supervisor TRUE
   toolSlot [
     Pose {
@@ -85,26 +82,6 @@ UR5e {
     Pose {
       translation -0.05 0 0
       rotation 0 0 1 1.570796
-      children [
-        Solid {
-          children [
-            Camera {
-              name "wrist_camera"
-              fieldOfView 1.0472
-              width 640
-              height 480
-              far 3
-            }
-          ]
-          name "wrist_cam_mount"
-          boundingObject Box {
-            size 0.02 0.02 0.03
-          }
-          physics Physics {
-            mass 0.05
-          }
-        }
-      ]
     }
   ]
 }

@@ -1,1 +1,1 @@
-webots worlds/panda.wbt
+webots worlds/final.wbt
