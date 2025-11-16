@@ -1,8 +1,13 @@
 """ur5e_controller controller."""
 
-from controller import Robot, Supervisor
-from ik import getDesiredRobotCommand, fk
+import sys
+import os
 import numpy as np
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
+from controller import Robot, Supervisor
+from utils.ik import getDesiredRobotCommand, fk
 
 # -----------------------------------------------------------------------------
 # Init
@@ -44,7 +49,7 @@ def _safe_get_device(name):
         return None
 
 gripper_left  = _safe_get_device("robotiq_2f85_catcher::left finger joint")
-gripper_right = _safe_get_device("robotiq_2f85_catcher ::right finger joint")
+gripper_right = _safe_get_device("robotiq_2f85_catcher::right finger joint")
 
 if gripper_left and gripper_right:
     for g in (gripper_left, gripper_right):

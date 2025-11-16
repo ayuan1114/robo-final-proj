@@ -1,8 +1,13 @@
 """ur5e_controller controller."""
 
-from controller import Robot, Supervisor
-from ik import getDesiredRobotCommand, fk
+import sys
+import os
 import numpy as np
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
+from controller import Robot, Supervisor
+from utils.ik import getDesiredRobotCommand, fk
 
 # -----------------------------------------------------------------------------
 # Init
