@@ -1,9 +1,10 @@
 """ur5e_controller controller."""
+
 import sys
 import os
 import numpy as np
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from controller import Robot, Supervisor
 from utils.ik import getDesiredRobotCommand, fk
