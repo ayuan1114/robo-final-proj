@@ -15,3 +15,5 @@ You can run our code with the following command
 ```bash
 webots worlds/final.wbt
 ```
+
+Or select `worlds/final.wbt` from Webots in File > Open World...
