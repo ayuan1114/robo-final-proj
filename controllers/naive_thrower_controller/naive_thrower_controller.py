@@ -90,53 +90,65 @@ def set_gripper_width_mm(width_mm, max_open_mm=85.0):
 # Main loop
 # -----------------------------------------------------------------------------
 
-BLOCK_START_POS = np.concatenate((np.array(block.getPosition()) - np.array(robot.getPosition()), [0,0,0]))
+BLOCK_START_POS = np.concatenate((np.array(block.getPosition()) - np.array(robot.getPosition()), [0,0,1.57]))
 
 BASE_POSE = [1.2, -1.2, 1.5, -2.0, -1.57, 1.03]
-ARM_TO_BLOCK = getDesiredRobotCommand(0, BLOCK_START_POS, BASE_POSE)
-START_THROW_POSE = [2.7, -1.2, 1.5, 0, -1.57, 1.57, 1.0]
-END_THROW_POSE = [2.7, -1.2, 1.5, -3, -1.57, 1.57, 0.0]
+START_THROW_POSE = np.array([2.7, -1.2, 1.5, 0, -1.57, 1.57, 1.0])
+END_THROW_POSE = np.array([2.7, -1.2, 1.5, -3, -1.57, 1.57, 0.0])
 THROW_TIME = 20  # timesteps over which to execute the throw
+MOVE_TIME = 100
 
+start = None
 
-def get_pose(t: int, last_pose):
-    if t < 50: 
-        return BASE_POSE + [0.0]
-    elif t < 100:
-        return np.concatenate((ARM_TO_BLOCK, [0.0]))
-    elif t < 150:
-        return np.concatenate((ARM_TO_BLOCK, [1.0]))
-    elif t < 200:
-        # Linearly interpolate from the position at t=150 to START_THROW_POSE over t in [150, 200)
-        frac = float(t - 150) / 50.0
-        # Compute the pose at t=150
-        pose_150 = np.concatenate((ARM_TO_BLOCK, [1.0]))
-        start = np.array(pose_150, dtype=float)
-        end = np.array(START_THROW_POSE, dtype=float)
-        joints = (1.0 - frac) * start + frac * end
-        return joints
-    elif t < 200 + THROW_TIME:
-        # linearly interpolate between START_THROW_POSE and END_THROW_POSE over t in [200, 200+THROW_TIME)
-        frac = float(t - 200) / THROW_TIME
-        start = np.array(START_THROW_POSE, dtype=float)
-        end = np.array(END_THROW_POSE, dtype=float)
-        joints = (1.0 - frac) * start + frac * end
-        return joints
-    else:
-        return END_THROW_POSE
+class Arm:
+    def __init__(self):
+        self.start_pose = None
+        self.end_pose = None
+
+    def get_pose(self, t: int, last_pose):
+        if t < 50:
+            return BASE_POSE + [85]
+        elif t < 100:
+            return np.concatenate((getDesiredRobotCommand(0, BLOCK_START_POS, last_pose), [85]))
+        elif t < 130:
+            return np.concatenate((getDesiredRobotCommand(0, BLOCK_START_POS, last_pose), [10]))
+        elif t < 150:
+            desired_pose = BLOCK_START_POS.copy()
+            desired_pose[2] += 0.1  # lift 10cm above block
+            return np.concatenate((getDesiredRobotCommand(0, desired_pose, last_pose), [10]))
+        elif t < 150 + MOVE_TIME:
+            # Linearly interpolate from the position at t=150 to START_THROW_POSE over t in [150, 200)
+            frac = float(t - 150) / MOVE_TIME
+            if self.start_pose is None:
+                pose = last_pose.copy()
+                self.start_pose = np.concatenate((pose, [10]))
+                self.end_pose = np.array(START_THROW_POSE)
+            joints = (1.0 - frac) * self.start_pose + frac * self.end_pose
+            if np.linalg.norm(joints - self.end_pose) < 1e-6:
+                self.start_pose = None
+                self.end_pose = None
+            return joints
+        elif t < 150 + MOVE_TIME + THROW_TIME:
+            # linearly interpolate between START_THROW_POSE and END_THROW_POSE over t in [200, 200+THROW_TIME)
+            frac = float(t - (150 + MOVE_TIME)) / THROW_TIME
+            joints = (1.0 - frac) * START_THROW_POSE + frac * END_THROW_POSE
+            return joints
+        else:
+            return END_THROW_POSE
 
 tt = 0
 last_pose = BASE_POSE
 
+thrower = Arm()
 
 while sup.step(timestep) != -1:
 
-    t = sup.getTime()
+    t = sup.getTime()    
 
-    cur_pose = get_pose(tt, last_pose[:-1])
+    cur_pose = thrower.get_pose(tt, last_pose[:-1])
     for j, motor in enumerate(motors):
         motor.setPosition(cur_pose[j])
-    set_gripper_normalized(cur_pose[-1])
+    set_gripper_width_mm(cur_pose[-1])
 
     if tt % 50 == 0:
         print(f"[{tt}] Thrower Config: ", cur_pose)

@@ -9,30 +9,42 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Parquetry.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Wall.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/devices/robotiq/protos/Robotiq2f85Gripper.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/solids/protos/SolidBox.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Copper.proto"
 EXTERNPROTO "../protos/UR5e.proto"
 
 WorldInfo {
   info [
-    "This example showcases Franka Emika's Panda robot in a factory setting."
+    "This example showcases throwing and catching with the UR5e arm."
   ]
-  title "Panda demo"
+  title "Throw catch demo"
   basicTimeStep 16
 }
+
 DEF VIEWPOINT Viewpoint {
   orientation -0.09866468420170614 0.0027493923875141937 0.995116938320757 3.632648594360225
   position 2.4137971053182143 3.7122954316877914 1.2693671060064997
   ambientOcclusionRadius 1
 }
-DEF BLOCK SolidBox {
+DEF BLOCK Solid {
   translation 1 2.8 0.75
-  size 0.03 0.03 0.06
-  appearance Copper {
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          emissiveColor 1 0 0
+        }
+      }
+      geometry Box {
+        size 0.03 0.03 0.03
+      }
+    }
+  ]
+  boundingObject Box {
+    size 0.03 0.03 0.03
   }
   physics Physics {
-    density -1
-    mass 0.2
+    coulombFriction 2
+    mass 0.01
   }
 }
 DEF THROWER UR5e {
