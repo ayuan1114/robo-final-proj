@@ -89,7 +89,12 @@ def set_gripper_width_mm(width_mm, max_open_mm=85.0):
 # -----------------------------------------------------------------------------
 # Main loop
 # -----------------------------------------------------------------------------
+
+CATCH_X = -0.67
+PASSED = False
+
 tt = 0
+
 while sup.step(timestep) != -1:
     # Example UR5e pose (replace with your planner)
     desired_arm = [-0.343, -1.2, 1.5, -2.0, -1.57, 1.03]
@@ -105,9 +110,21 @@ while sup.step(timestep) != -1:
     else:
         set_gripper_width_mm(85.0)        # fully open
 
-    if tt % 50 == 0:
-        print(f"[{tt}] Catcher Config: ", desired_arm)
-        print(f"[{tt}] Catcher End: ", fk(desired_arm)[:3])
-        print(f"[{tt}] Catcher Block Pos: ", np.array(block.getPosition()) - np.array(robot.getPosition()))
+    # Get block velocity and position
+    block_velocity = block.getVelocity()
+    block_position = block.getPosition()
+    
+    if not PASSED:
+        if block_position[0] < CATCH_X:
+            PASSED = True
+            print(f"[{tt}] Block Position at catch: {block_position}")
+
+        if tt >= 200:
+            print(f"[{tt}] Block Velocity: {np.linalg.norm(block_velocity[:3])} (vector: {block_velocity[:3]})")  # Linear velocity
+
+        if tt % 50 == 0:
+            print(f"[{tt}] Catcher Config: ", desired_arm)
+            print(f"[{tt}] Catcher End: ", fk(desired_arm)[:3])
+            print(f"[{tt}] Catcher Block Pos: ", np.array(block.getPosition()) - np.array(robot.getPosition()))
 
     tt += 1

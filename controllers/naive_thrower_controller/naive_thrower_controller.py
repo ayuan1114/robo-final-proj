@@ -113,7 +113,6 @@ class Arm:
         self.throwing = False
 
     def get_pose(self, t: int, last_pose):
-        print(last_pose)
         # return END_THROW_POSE + [0]  # Placeholder for no movement
         if t < 50:
             return BASE_POSE + [0]
@@ -152,7 +151,11 @@ while sup.step(timestep) != -1:
     cur_pose = thrower.get_pose(tt, last_pose[:-1])
     for j, motor in enumerate(motors):
         motor.setPosition(cur_pose[j])
+    
     set_gripper_normalized(cur_pose[-1])
+
+    if tt == 200:
+        print('=' * 50 + 'THROWN' + '=' * 50)
 
     if tt % 50 == 0:
         print(f"[{tt}] Thrower Config: ", cur_pose)
