@@ -95,6 +95,7 @@ BLOCK_START_POS = np.concatenate((np.array(block.getPosition()) - np.array(robot
 BASE_POSE = [1.2, -1.2, 1.5, -2.0, -1.57, 1.03]
 # START_THROW_POSE = np.array([2.7, -1.2, 1.5, -1, -1.57, 1.57])
 # END_THROW_POSE = np.array([2.7, -1.2, 1.5, -3, -1.57, 1.57])
+START_THROW_POSE = np.array([2.7, -1.22, 1.75, -2.1, -1.57, 3.14])
 END_THROW_POSE = np.array([2.7, -1.22, 1, -3, -1.57, 3.14])
 
 THROW_TIME = 15  # timesteps over which to execute the throw
@@ -124,9 +125,18 @@ class Arm:
             desired_pose = BLOCK_START_POS.copy()
             desired_pose[2] += 0.1  # lift 10cm above block
             return np.concatenate((getDesiredRobotCommand(0, desired_pose, last_pose), [1]))
-        elif last_pose[0] < 2.7:
-            last_pose[0] += 0.01
-            return np.concatenate((last_pose, [1]))
+        elif t < 150 + MOVE_TIME:
+            if self.start_pose is None:
+                self.start_pose = last_pose.copy()
+                self.end_pose = START_THROW_POSE
+            
+            progress = (t - 150) / MOVE_TIME
+            joints = (1 - progress) * self.start_pose + progress * self.end_pose
+            
+            if progress >= 1.0:
+                self.start_pose = None
+                self.end_pose = None
+            return np.concatenate((joints, [1]))
         else:
             return np.concatenate((END_THROW_POSE, [1]))
 
