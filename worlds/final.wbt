@@ -9,7 +9,6 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Parquetry.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Wall.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/devices/robotiq/protos/Robotiq2f85Gripper.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Copper.proto"
 EXTERNPROTO "../protos/UR5e.proto"
 
 WorldInfo {
@@ -18,8 +17,11 @@ WorldInfo {
   ]
   title "Throw catch demo"
   basicTimeStep 16
+  contactProperties [
+    ContactProperties {
+    }
+  ]
 }
-
 DEF VIEWPOINT Viewpoint {
   orientation -0.09866468420170614 0.0027493923875141937 0.995116938320757 3.632648594360225
   position 2.4137971053182143 3.7122954316877914 1.2693671060064997
@@ -43,44 +45,14 @@ DEF BLOCK Solid {
     size 0.03 0.03 0.03
   }
   physics Physics {
-    coulombFriction 2
     mass 0.01
   }
 }
 DEF THROWER UR5e {
-  name "thrower_arm"
-  hidden position_0_0 -0.5425930953611413
-  hidden translation_1 0 0 0.163
-  hidden rotation_1 0 0 -1 0.5425930953611415
-  hidden position_1_0 -0.9342659202581604
-  hidden translation_2 0 0.138 0
-  hidden rotation_2 0 1 0 0.6365300797418378
-  hidden position_2_0 1.7527183061992715
-  hidden translation_3 0 -0.131 0.425
-  hidden rotation_3 0 0.9999999999999999 0 1.7527183061992717
-  hidden position_3_0 -2.3891976112565265
-  hidden translation_4 0 0 0.392
-  hidden rotation_4 0 -1 0 0.818401611256524
-  hidden position_4_0 -1.570795016577992
-  hidden translation_5 0 0.127 0
-  hidden rotation_5 0 0 -1 1.5707950165779918
-  hidden position_5_0 1.0282032324145662
-  hidden translation_6 0 0 0.1
-  hidden rotation_6 0 0.9999999999999999 0 1.0282032324145665
-  hidden translation_8 0 -0.030601 0.054904
-  hidden rotation_8 2.0374578001751387e-15 1.1763266562256011e-08 1 3.141593
-  hidden translation_10 0 0.0061 0.0471
   hidden rotation_10 -1 0 0 6.613900161681512e-06
-  hidden translation_12 0 -0.0127 0.06142
-  hidden rotation_12 8.43696424906136e-13 4.871082946139017e-06 0.9999999999881364 3.141593
-  hidden translation_13 0 0.030601 0.054904
-  hidden rotation_13 0.9999999999999999 0 0 2.9802322387695313e-08
-  hidden translation_15 0 0.0061 0.0471
   hidden rotation_15 -1 0 0 1.0762435237836832e-05
-  hidden translation_17 0 0.0127 0.06142
-  hidden rotation_17 1 0 0 8.930508451208434e-06
   translation 1 2.2 0.7
-  rotation 0 0 1 0
+  name "thrower_arm"
   controller "naive_thrower_controller"
   supervisor TRUE
   toolSlot [
@@ -99,39 +71,10 @@ DEF THROWER UR5e {
   ]
 }
 DEF CATCHER UR5e {
-  name "catcher_arm"
-  hidden position_0_0 -0.5425930953611413
-  hidden translation_1 0 0 0.163
-  hidden rotation_1 0 0 -1 0.5425930953611415
-  hidden position_1_0 -0.9342659202581604
-  hidden translation_2 0 0.138 0
-  hidden rotation_2 0 1 0 0.6365300797418378
-  hidden position_2_0 1.7527183061992715
-  hidden translation_3 0 -0.131 0.425
-  hidden rotation_3 0 0.9999999999999999 0 1.7527183061992717
-  hidden position_3_0 -2.3891976112565265
-  hidden translation_4 0 0 0.392
-  hidden rotation_4 0 -1 0 0.818401611256524
-  hidden position_4_0 -1.570795016577992
-  hidden translation_5 0 0.127 0
-  hidden rotation_5 0 0 -1 1.5707950165779918
-  hidden position_5_0 1.0282032324145662
-  hidden translation_6 0 0 0.1
-  hidden rotation_6 0 0.9999999999999999 0 1.0282032324145665
-  hidden translation_8 0 -0.030601 0.054904
-  hidden rotation_8 2.0374578001751387e-15 1.1763266562256011e-08 1 3.141593
-  hidden translation_10 0 0.0061 0.0471
   hidden rotation_10 -1 0 0 6.613900161681512e-06
-  hidden translation_12 0 -0.0127 0.06142
-  hidden rotation_12 8.43696424906136e-13 4.871082946139017e-06 0.9999999999881364 3.141593
-  hidden translation_13 0 0.030601 0.054904
-  hidden rotation_13 0.9999999999999999 0 0 2.9802322387695313e-08
-  hidden translation_15 0 0.0061 0.0471
   hidden rotation_15 -1 0 0 1.0762435237836832e-05
-  hidden translation_17 0 0.0127 0.06142
-  hidden rotation_17 1 0 0 8.930508451208434e-06
   translation -1 3.1 0.7
-  rotation 0 0 1 0
+  name "catcher_arm"
   controller "catcher_controller"
   supervisor TRUE
   toolSlot [
