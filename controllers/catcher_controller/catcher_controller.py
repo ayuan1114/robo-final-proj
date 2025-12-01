@@ -6,6 +6,7 @@ import numpy as np
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
+from train_policy import START_THROW_POSE, END_THROW_POSE
 from controller import Robot, Supervisor
 from utils.ik import getDesiredRobotCommand, fk
 

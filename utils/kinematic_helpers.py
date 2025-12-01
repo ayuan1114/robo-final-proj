@@ -53,3 +53,28 @@ def T56(q):
         [ 0.0,  0.0, -1.0,  0.215], 
         [ 0.0,  0.0,  0.0,  1.0]
     ])
+
+
+def T02(q1, q2):
+    """Combined transformation from base to joint 2"""
+    return T01(q1) @ T12(q2)
+
+
+def T03(q1, q2, q3):
+    """Combined transformation from base to joint 3"""
+    return T01(q1) @ T12(q2) @ T23(q3)
+
+
+def T04(q1, q2, q3, q4):
+    """Combined transformation from base to joint 4"""
+    return T01(q1) @ T12(q2) @ T23(q3) @ T34(q4)
+
+
+def T05(q1, q2, q3, q4, q5):
+    """Combined transformation from base to joint 5"""
+    return T01(q1) @ T12(q2) @ T23(q3) @ T34(q4) @ T45(q5)
+
+
+def T06(q1, q2, q3, q4, q5, q6):
+    """Combined transformation from base to end-effector"""
+    return T01(q1) @ T12(q2) @ T23(q3) @ T34(q4) @ T45(q5) @ T56(q6)

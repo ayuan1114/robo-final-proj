@@ -2,3 +2,9 @@ __pycache__/
 .venv/
 
 *.wbproj
+
+policy_weights/
+eval_results/
+trajectory_archive/
+eval_data.json
+eval_result.json

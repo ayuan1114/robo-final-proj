@@ -1,11 +1,13 @@
-"""ur5e_controller controller."""
+"""ur5e_controller controller - uses learned trajectory from optimization."""
 
 import sys
 import os
 import numpy as np
+import pickle
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
+from train_policy import START_THROW_POSE, END_THROW_POSE
 from controller import Robot, Supervisor
 from utils.ik import getDesiredRobotCommand, fk
 
@@ -93,47 +95,95 @@ def set_gripper_width_mm(width_mm, max_open_mm=85.0):
 BLOCK_START_POS = np.concatenate((np.array(block.getPosition()) - np.array(robot.getPosition()), [0,0,0]))
 
 BASE_POSE = [1.2, -1.2, 1.5, -2.0, -1.57, 1.03]
-ARM_TO_BLOCK = getDesiredRobotCommand(0, BLOCK_START_POS, BASE_POSE)
-START_THROW_POSE = [2.7, -1.2, 1.5, 0, -1.57, 1.57, 1.0]
-END_THROW_POSE = [2.7, -1.2, 1.5, -3, -1.57, 1.57, 0.0]
-THROW_TIME = 20  # timesteps over which to execute the throw
 
+# Load learned policy
+OUT_FOLDER = os.path.join(os.path.dirname(__file__), 'policy_weights')
+POLICY_PATH = os.path.join(OUT_FOLDER, 'learned_policy.pkl')
+POLICY_LOADED = False
+LEARNED_TRAJECTORY = None
+LEARNED_N_STEPS = 0
 
-def get_pose(t: int, last_pose):
-    if t < 50: 
-        return BASE_POSE + [0.0]
-    elif t < 100:
-        return np.concatenate((ARM_TO_BLOCK, [0.0]))
-    elif t < 150:
-        return np.concatenate((ARM_TO_BLOCK, [1.0]))
-    elif t < 200:
-        # Linearly interpolate from the position at t=150 to START_THROW_POSE over t in [150, 200)
-        frac = float(t - 150) / 50.0
-        # Compute the pose at t=150
-        pose_150 = np.concatenate((ARM_TO_BLOCK, [1.0]))
-        start = np.array(pose_150, dtype=float)
-        end = np.array(START_THROW_POSE, dtype=float)
-        joints = (1.0 - frac) * start + frac * end
-        return joints
-    elif t < 200 + THROW_TIME:
-        # linearly interpolate between START_THROW_POSE and END_THROW_POSE over t in [200, 200+THROW_TIME)
-        frac = float(t - 200) / THROW_TIME
-        start = np.array(START_THROW_POSE, dtype=float)
-        end = np.array(END_THROW_POSE, dtype=float)
-        joints = (1.0 - frac) * start + frac * end
-        return joints
-    else:
-        return END_THROW_POSE
+try:
+    with open(POLICY_PATH, 'rb') as f:
+        policy_data = pickle.load(f)
+    LEARNED_TRAJECTORY = policy_data['q_trajectory']
+    LEARNED_N_STEPS = len(LEARNED_TRAJECTORY)
+    POLICY_LOADED = True
+    print(f"[LEARNED] Loaded policy with {LEARNED_N_STEPS} timesteps")
+    print(f"[LEARNED] Start pose: {policy_data['start_pose']}")
+    print(f"[LEARNED] End pose: {policy_data['end_pose']}")
+except FileNotFoundError:
+    print(f"[WARNING] No learned policy found at {POLICY_PATH}")
+    print("[WARNING] Run train_policy.py first to generate learned_policy.pkl")
+    print("[WARNING] Falling back to linear interpolation")
+    # Fallback to naive approach
+    START_THROW_POSE = np.array([2.7, -1.22, 1.75, -2.1, -1.57, 3.14])
+    END_THROW_POSE = np.array([2.7, -1.22, 1, -3, -1.57, 3.14])
+    LEARNED_N_STEPS = 30
+
+MOVE_TIME = 50
+
+class Arm:
+    def __init__(self):
+        self.start_pose = None
+        self.end_pose = None
+        self.throw_step = 0
+
+    def get_pose(self, t: int, last_pose):
+        if t < 50:
+            return BASE_POSE + [0]
+        elif t < 100:
+            return np.concatenate((getDesiredRobotCommand(0, BLOCK_START_POS, last_pose), [0]))
+        elif t < 130:
+            return np.concatenate((getDesiredRobotCommand(0, BLOCK_START_POS, last_pose), [1]))
+        elif t < 150:
+            desired_pose = BLOCK_START_POS.copy()
+            desired_pose[2] += 0.1  # lift 10cm above block
+            return np.concatenate((getDesiredRobotCommand(0, desired_pose, last_pose), [1]))
+        elif t < 150 + MOVE_TIME:
+            if self.start_pose is None:
+                self.start_pose = last_pose.copy()
+                self.end_pose = START_THROW_POSE
+            
+            progress = (t - 150) / MOVE_TIME
+            joints = (1 - progress) * self.start_pose + progress * self.end_pose
+            
+            if progress >= 1.0:
+                self.start_pose = None
+                self.end_pose = None
+            return np.concatenate((joints, [1]))
+        elif t < 150 + MOVE_TIME + LEARNED_N_STEPS:
+            # Execute learned trajectory
+            self.throw_step = t - (150 + MOVE_TIME)
+            
+            if POLICY_LOADED:
+                joints = LEARNED_TRAJECTORY[self.throw_step]
+            else:
+                # Fallback: linear interpolation
+                progress = self.throw_step / LEARNED_N_STEPS
+                joints = (1 - progress) * START_THROW_POSE + progress * END_THROW_POSE
+            
+            # Release at -3 radians or at end of trajectory
+            gripper = [1] if (joints[3] > -3.0 and self.throw_step < LEARNED_N_STEPS - 5) else [0]
+            
+            return np.concatenate((joints, gripper))
+        else:
+            # Hold final pose
+            if POLICY_LOADED:
+                return np.concatenate((LEARNED_TRAJECTORY[-1], [0]))
+            else:
+                return np.concatenate((END_THROW_POSE, [0]))
 
 tt = 0
 last_pose = BASE_POSE
 
+thrower = Arm()
 
 while sup.step(timestep) != -1:
 
-    t = sup.getTime()
+    t = sup.getTime()    
 
-    cur_pose = get_pose(tt, last_pose[:-1])
+    cur_pose = thrower.get_pose(tt, last_pose[:-1])
     for j, motor in enumerate(motors):
         motor.setPosition(cur_pose[j])
     set_gripper_normalized(cur_pose[-1])
