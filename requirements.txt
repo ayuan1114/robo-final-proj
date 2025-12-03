@@ -1,2 +1,9 @@
 numpy>=1.21.0,<2.0.0
 scipy>=1.7.0,<2.0.0
+# OpenAI Gym compatibility shim for Stable-Baselines3
+gym
+shimmy>=2.0
+stable-baselines3
+# torch: install the appropriate wheel for your system (CPU/CUDA). Example:
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+torch>=1.13.0

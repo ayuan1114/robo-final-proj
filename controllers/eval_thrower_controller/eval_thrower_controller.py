@@ -61,6 +61,10 @@ def get_gripper_position():
             return (left_ps.getValue() + right_ps.getValue()) / 2
     return 0.0
 
+def get_joint_positions():
+    """Get current arm joint positions"""
+    return np.array([m.getPositionSensor().getValue() for m in motors])
+
 # -----------------------------------------------------------------------------
 # Load evaluation data
 # -----------------------------------------------------------------------------
@@ -88,6 +92,7 @@ BLOCK_START_POS = np.concatenate((np.array(block.getPosition()) - np.array(robot
 BASE_POSE = [1.2, -1.2, 1.5, -2.0, -1.57, 1.03]
 MOVE_TIME = 50
 CHECKPOINT_X = -0.67
+TABLE_Z = 0.715
 
 # Load start throw pose from trajectory
 START_THROW_POSE = TRAJECTORY[0]
@@ -98,7 +103,8 @@ block_dropped = False
 release_velocity = None
 final_distance = 0.0
 block_pos_at_release = None
-gripper_closed = False
+landed = False
+block_land_pos = None
 
 tt = 0
 last_pose = np.array(BASE_POSE)
@@ -109,7 +115,7 @@ end_pose = None
 
 pos_at_passing = None
 
-while sup.step(timestep) != -1:
+while sup.step(timestep) != -1 and not landed:
     # Get block position
     block_pos = np.array(block.getPosition())
     robot_pos = np.array(robot.getPosition())
@@ -131,7 +137,6 @@ while sup.step(timestep) != -1:
         # Position over block
         joints = getDesiredRobotCommand(0, BLOCK_START_POS, last_pose)
         gripper = 1
-        gripper_closed = True
         
     elif tt == GRIPPER_CLOSE_TIME:
         # Close gripper
@@ -161,53 +166,40 @@ while sup.step(timestep) != -1:
         joints = TRAJECTORY[traj_step]
         
         # Handle gripper release
-        if tt == GRIPPER_OPEN_TIME and gripper_closed:
-            set_gripper(False)
-            gripper_closed = False
+        if tt == GRIPPER_OPEN_TIME and gripper:
             gripper = 0
-        else:
-            gripper = 1 if gripper_closed else 0
             
     else:
-        # Hold final pose for 100 steps to observe result
+        # Continue simulation until block lands (passes through the table plane)
         joints = TRAJECTORY[-1]
         gripper = 0
         
         if not checkpoint_reached and block_pos[0] < CHECKPOINT_X:
             checkpoint_reached = True
             pos_at_passing = block_pos.copy()
+        
+        if not landed and block_pos[2] < TABLE_Z:
+            landed = True
+            block_land_pos = block_rel_pos.copy()
 
-        # Check if we should end
-        if tt > 150 + MOVE_TIME + len(TRAJECTORY) + 100:
-            break
-    
     # Apply commands
     for j, motor in enumerate(motors):
         motor.setPosition(joints[j])
     set_gripper(gripper == 1)
-
-    # Get current gripper position for drop detection
-    gripper_pos = get_gripper_position()
-    #block_gripper_dist = np.linalg.norm(block_rel_pos - arm_pos)
 
     # Check if block dropped during pickup/throw
     # Block has dropped if:
     # 1. Gripper should be closed (gripper_closed=True)
     # 2. Block is too far from gripper (>0.15m)
     # 3. Gripper fingers are not actually closed (<0.5, indicating nothing is gripping)
-    if tt > GRIPPER_CLOSE_TIME and gripper_closed:
-        if gripper_pos < 0.5: # or block_gripper_dist > 0.15:
+    if tt > 150 + MOVE_TIME and not block_dropped:
+        joints_pos = get_joint_positions()
+        block_gripper_dist = np.linalg.norm(block_rel_pos - fk(joints_pos)[:3])
+        if block_gripper_dist > 0.08:
             block_dropped = True
             release_velocity = block.getVelocity()
-            block_pos_at_release = block_pos.copy()
-            print(f"[EVAL] Block dropped at t={tt}")
-            break
-    
-    # Record final distance after trajectory completes
-    if tt == 150 + MOVE_TIME + len(TRAJECTORY) + 99:
-        if block_pos_at_release is not None:
-            final_block_position = block_pos[:2]
-
+            block_pos_at_release = block_rel_pos.copy()
+            print(f"[EVAL] Block released at t={tt}")
     last_pose = np.array(joints)
     tt += 1
 
@@ -219,12 +211,26 @@ os.makedirs(eval_results_dir, exist_ok=True)
 result_path = os.path.join(os.path.dirname(__file__), "eval_result.json")
 result_archive_path = os.path.join(eval_results_dir, f'eval_results_{eval_data["run_name"]}.jsonl')
 
+release_vel_hor = (
+        -float(np.linalg.norm(release_velocity[:2])) if release_velocity is not None and release_velocity[0] > 0
+        else float(np.linalg.norm(release_velocity[:2])) if release_velocity is not None
+        else 0.0
+    )
+
+final_distance = (
+    -float(np.linalg.norm(block_land_pos[:2] - block_pos_at_release[:2])) if block_pos_at_release is not None and block_land_pos[0] < block_pos_at_release[0]
+    else float(np.linalg.norm(block_land_pos[:2] - block_pos_at_release[:2])) if block_land_pos is not None
+    else 0.0
+)
+
 result = {
     'train_step': eval_data['train_step'],
     'success': checkpoint_reached,
-    'release_velocity': np.linalg.norm(release_velocity) if release_velocity is not None else 0.0,
+    'release_velocity_z': release_velocity[2] if release_velocity is not None else 0.0,
+    # Signed horizontal speed: negative when release velocity x-component is positive
+    'release_velocity_hor': release_vel_hor,
     'pos_at_cp': pos_at_passing.tolist() if pos_at_passing is not None else [0, 0, 0],
-    'final_distance': float(np.linalg.norm(block_rel_pos - block_pos_at_release)) if block_pos_at_release is not None else 0.0,
+    'final_distance': float(np.linalg.norm(block_land_pos[:2] - block_pos_at_release[:2])) if block_pos_at_release is not None else 0.0,
 }
 
 with open(result_path, "w") as f:
@@ -234,19 +240,20 @@ result = {
     'train step': eval_data['train_step'],
     "block released": block_dropped,
     "block released time": tt if block_dropped else 'N/A',
-    "release velocity": np.linalg.norm(release_velocity) if release_velocity is not None else 0.0,
+    'release velocity z': release_velocity[2] if release_velocity is not None else 0.0,
+    # Make horizontal release value negative when vx > 0 per user request
+    'release velocity hor': release_vel_hor,
     "success": checkpoint_reached,
-    "final distance (from release pos)": float(np.linalg.norm(block_rel_pos - block_pos_at_release)) if block_pos_at_release is not None else 0.0,
+    "final distance (from release pos XY to landing pos XY)": (-1 + 2 * (block_land_pos[0] > block_pos_at_release[0])) * float(np.linalg.norm(block_land_pos[:2] - block_pos_at_release[:2])) if block_dropped else 0.0,
     "position at checkpoint (global)": pos_at_passing.tolist() if pos_at_passing is not None else 'Did not reach',
     "position at release (rel. arm base)": block_pos_at_release.tolist() if block_pos_at_release is not None else [0, 0, 0],
     "final arm pos (rel. arm base)": arm_pos.tolist(),
     "final block pos (rel. arm base)": block_rel_pos.tolist(),
-    
 }
 
 with open(result_archive_path, 'a') as f:
     f.write(json.dumps(result) + '\n')
 
-print(f"[EVAL] Results: success={result['success']}, velocity={release_velocity}, distance={final_distance:.3f}m")
+print(f"[EVAL] Results: success={result['success']}, velocity={release_velocity[:3]}, displacement={block_land_pos}m")
 
 sup.simulationQuit(0)

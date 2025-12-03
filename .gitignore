@@ -8,3 +8,4 @@ eval_results/
 trajectory_archive/
 eval_data.json
 eval_result.json
+ppo_rl_test.zip

@@ -31,7 +31,6 @@ class WebotsSimulator:
         
     def evaluate_trajectory(self, 
                           q_trajectory: np.ndarray,
-                          initial_block_pos: np.ndarray,
                           gripper_close_time: int = 130,
                           gripper_open_time: int = 200,
                           train_step: int = 0) -> dict:
@@ -50,14 +49,13 @@ class WebotsSimulator:
         # Save trajectory data to eval_thrower_controller directory
         controller_dir = os.path.join(self.controllers_dir, 'eval_thrower_controller')
         os.makedirs(controller_dir, exist_ok=True)
-        
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
 
         # Save trajectory and gripper timing to JSON data file
         eval_data = {
             'run_name': self.run_name,
             'train_step': train_step,
             'trajectory': q_trajectory.tolist(),
+            'render': not self.headless,
             'gripper_close_time': int(gripper_close_time),
             'gripper_open_time': int(gripper_open_time)
         }
@@ -81,7 +79,7 @@ class WebotsSimulator:
     
     def _run_simulation(self) -> dict:
         """Run Webots simulation and get results"""
-        result_path = os.path.join(os.path.dirname(__file__), "eval_result.json")
+        result_path = os.path.join(os.path.dirname(__file__), "..", "eval_thrower_controller", "eval_result.json")
         
         # Build Webots command
         if self.headless:
@@ -105,21 +103,12 @@ class WebotsSimulator:
             # Run simulation - don't capture output so prints pass through to console
             process = subprocess.run(webots_cmd, timeout=30, capture_output=False)
             
-            # Read results
-            if os.path.exists(result_path):
-                import json
-                with open(result_path, 'r') as f:
-                    # Read the last line (most recent result)
-                    result = json.loads(f.read().strip())
-                os.remove(result_path)
-                return result
-            else:
-                return {
-                    "success": False,
-                    "block_dropped": True,
-                    "release_velocity": [0, 0, 0],
-                    "final_distance": 0.0
-                }
+            import json
+            with open(result_path, 'r') as f:
+                # Read the last line (most recent result)
+                result = json.loads(f.read().strip())
+            os.remove(result_path)
+            return result
                 
         except subprocess.TimeoutExpired:
             return {
@@ -128,3 +117,17 @@ class WebotsSimulator:
                 "release_velocity": [0, 0, 0],
                 "final_distance": 0.0
             }
+
+    def launch_gui_and_wait(self) -> None:
+        """Launch Webots with GUI and block until the user closes the application.
+
+        This is a convenience helper used by environments' `render()` methods for
+        interactive debugging. It does not read/write eval data — it simply opens
+        the world file with Webots and waits until the program exits.
+        """
+        webots_cmd = [
+            "webots",
+            self.world_file
+        ]
+        # Use subprocess.run to block until the user closes the GUI
+        subprocess.run(webots_cmd, check=False)
