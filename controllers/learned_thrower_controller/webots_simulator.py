@@ -10,6 +10,7 @@ import time
 import shutil
 from typing import Tuple, Optional
 import json
+import uuid
 
 class WebotsSimulator:
     """Headless Webots simulator for evaluating throwing trajectories"""
@@ -21,6 +22,8 @@ class WebotsSimulator:
             timestep: Simulation timestep in seconds
             headless: If True, run without graphics; if False, show GUI
         """
+        print("[SIM] Initializing WebotsSimulator")
+
         self.world_file = world_file
         self.timestep = timestep
         self.headless = headless
@@ -28,7 +31,8 @@ class WebotsSimulator:
         self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
         self.controllers_dir = os.path.join(self.project_root, 'controllers')
         self.run_name = run_name
-        
+        self.process = None
+
     def evaluate_trajectory(self, 
                           q_trajectory: np.ndarray,
                           gripper_close_time: int = 130,
@@ -48,10 +52,16 @@ class WebotsSimulator:
         """
         # Save trajectory data to eval_thrower_controller directory
         controller_dir = os.path.join(self.controllers_dir, 'eval_thrower_controller')
+        result_path = os.path.join(os.path.dirname(__file__), "..", "eval_thrower_controller", "eval_result.json")
         os.makedirs(controller_dir, exist_ok=True)
 
         # Save trajectory and gripper timing to JSON data file
+        # Generate an easy-to-read unique run id for traceability
+        run_id = str(uuid.uuid4())
+        print(f"[SIM] Starting run_id={run_id} train_step={train_step}")
+
         eval_data = {
+            'run_id': run_id,
             'run_name': self.run_name,
             'train_step': train_step,
             'trajectory': q_trajectory.tolist(),
@@ -75,12 +85,28 @@ class WebotsSimulator:
         # Run simulation
         result = self._run_simulation()
         
+        while True:
+            time.sleep(0.1)
+            try:
+                with open(result_path, 'r') as f:
+                    result = json.loads(f.read().strip())
+                
+                if result.get('run_id', '') == run_id:
+                    break
+
+
+            except FileNotFoundError:
+                pass
+
         return result
     
     def _run_simulation(self) -> dict:
-        """Run Webots simulation and get results"""
-        result_path = os.path.join(os.path.dirname(__file__), "..", "eval_thrower_controller", "eval_result.json")
-        
+        """Ensure Webots is running and execute the evaluation."""
+
+        if self.process is not None:
+            if self.process.poll() is None:
+                return
+
         # Build Webots command
         if self.headless:
             webots_cmd = [
@@ -99,24 +125,7 @@ class WebotsSimulator:
                 self.world_file
             ]
         
-        try:
-            # Run simulation - don't capture output so prints pass through to console
-            process = subprocess.run(webots_cmd, timeout=30, capture_output=False)
-            
-            import json
-            with open(result_path, 'r') as f:
-                # Read the last line (most recent result)
-                result = json.loads(f.read().strip())
-            os.remove(result_path)
-            return result
-                
-        except subprocess.TimeoutExpired:
-            return {
-                "success": False,
-                "block_dropped": True,
-                "release_velocity": [0, 0, 0],
-                "final_distance": 0.0
-            }
+        self.process = subprocess.Popen(webots_cmd)
 
     def launch_gui_and_wait(self) -> None:
         """Launch Webots with GUI and block until the user closes the application.

@@ -92,8 +92,6 @@ class WebotsThrowEnv(gym.Env):
             train_step=int(self.episode_counter)
         )
 
-        
-
         # Build reward: encourage passing checkpoint and horizontal velocity
         vz = np.array(sim_result.get('release_velocity_z'))
         hor_speed = np.array(sim_result.get('release_velocity_hor'))
@@ -108,6 +106,18 @@ class WebotsThrowEnv(gym.Env):
         reward += 50.0 * hor_speed
         reward += 5.0 * vz
         reward += 20.0 * final_distance
+
+        # Expose last simulator result on the env instance so callbacks can access it
+        try:
+            # Include the computed reward and episode index in the sim result
+            # Note: avoid using the reserved key 'episode' because SB3 expects
+            # info['episode'] to be an episode-info dict. Use 'sim_episode'
+            # instead to prevent SB3 from misinterpreting this field.
+            sim_result['reward'] = float(reward)
+            sim_result['sim_episode'] = int(self.episode_counter)
+            self.last_sim_result = sim_result
+        except Exception:
+            self.last_sim_result = None
 
         obs = np.concatenate([self.start_pose, self.end_pose]).astype(np.float32)
         done = True  # one-shot episode
