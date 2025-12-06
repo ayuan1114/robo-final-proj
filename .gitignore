@@ -11,3 +11,4 @@ eval_result.json
 ppo_rl_test.zip
 
 wandb/
+rl_outputs/

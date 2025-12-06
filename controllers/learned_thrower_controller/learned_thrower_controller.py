@@ -1,14 +1,12 @@
-"""ur5e_controller controller - uses learned trajectory from optimization."""
-
 import sys
 import os
 import numpy as np
-import pickle
+import json
+import time
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from train_policy import START_THROW_POSE, END_THROW_POSE
-from controller import Robot, Supervisor
+from controller import Supervisor
 from utils.ik import getDesiredRobotCommand, fk
 
 # -----------------------------------------------------------------------------
@@ -23,12 +21,8 @@ timestep = int(sup.getBasicTimeStep())
 # UR5e arm joints (6-DoF)
 # -----------------------------------------------------------------------------
 arm_joint_names = [
-    "shoulder_pan_joint",
-    "shoulder_lift_joint",
-    "elbow_joint",
-    "wrist_1_joint",
-    "wrist_2_joint",
-    "wrist_3_joint",
+    "shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint",
+    "wrist_1_joint", "wrist_2_joint", "wrist_3_joint"
 ]
 motors = [sup.getDevice(n) for n in arm_joint_names]
 for m in motors:
@@ -36,162 +30,171 @@ for m in motors:
     ps.enable(timestep)
 
 # -----------------------------------------------------------------------------
-# Robotiq 2F-85 gripper (two finger motors under toolSlot)
-# Names come from your world: Robotiq2f85Gripper { name "robotiq_2f85" }
-# So the device names are:
-#   "robotiq_2f85::left finger joint", "robotiq_2f85::right finger joint"
+# Robotiq 2F-85 gripper
 # -----------------------------------------------------------------------------
-GRIP_MIN = 0.0
-GRIP_MAX = 0.80  # typical range on actuated finger joints; adjust if needed
-
-def _safe_get_device(name):
-    try:
-        return sup.getDevice(name)
-    except Exception:
-        return None
-
-gripper_left  = _safe_get_device("robotiq_2f85_thrower::left finger joint")
-gripper_right = _safe_get_device("robotiq_2f85_thrower::right finger joint")
+gripper_left = sup.getDevice("robotiq_2f85_thrower::left finger joint")
+gripper_right = sup.getDevice("robotiq_2f85_thrower::right finger joint")
 
 if gripper_left and gripper_right:
     for g in (gripper_left, gripper_right):
-        try:
-            g.setVelocity(1.5)
-        except Exception:
-            pass
-        try:
-            g.setForce(100.0)
-        except Exception:
-            pass
-    print("[gripper] Robotiq 2F-85 finger motors found.")
-else:
-    print("[gripper] Could not find Robotiq 2F-85 motors. "
-          "Expected: 'robotiq_2f85::left finger joint' and "
-          "'robotiq_2f85::right finger joint'.")
+        g.setVelocity(1.5)
+        g.setForce(100.0)
+        # Enable position sensors on gripper
+        ps = g.getPositionSensor()
+        if ps:
+            ps.enable(timestep)
 
-def set_gripper_q(q):
-    """Set finger joint target (radians) to both fingers."""
-    if not (gripper_left and gripper_right):
-        return
-    q = float(np.clip(q, GRIP_MIN, GRIP_MAX))
-    gripper_left.setPosition(q)
-    gripper_right.setPosition(q)
+def set_gripper(closed):
+    """Set gripper state: True=closed, False=open"""
+    if gripper_left and gripper_right:
+        pos = 0.8 if closed else 0.0
+        gripper_left.setPosition(pos)
+        gripper_right.setPosition(pos)
 
-def set_gripper_normalized(g):
-    """g in [0,1]: 0=open, 1=closed."""
-    g = float(np.clip(g, 0.0, 1.0))
-    q = GRIP_MIN + g * (GRIP_MAX - GRIP_MIN)
-    set_gripper_q(q)
+def get_gripper_position():
+    """Get current gripper finger positions"""
+    if gripper_left and gripper_right:
+        left_ps = gripper_left.getPositionSensor()
+        right_ps = gripper_right.getPositionSensor()
+        if left_ps and right_ps:
+            return (left_ps.getValue() + right_ps.getValue()) / 2
+    return 0.0
 
-def set_gripper_width_mm(width_mm, max_open_mm=85.0):
-    """Approximate map from opening width (mm) to joint value; tune as needed."""
-    width_mm = float(np.clip(width_mm, 0.0, max_open_mm))
-    set_gripper_normalized(1.0 - width_mm / max_open_mm)
+def get_joint_positions():
+    """Get current arm joint positions"""
+    return np.array([m.getPositionSensor().getValue() for m in motors])
 
 # -----------------------------------------------------------------------------
 # Main loop
 # -----------------------------------------------------------------------------
 
+eval_data_path = os.path.join(os.path.dirname(__file__), "rl_outputs", "best_traj.json")
+
+with open(eval_data_path, 'r') as f:
+    # Read first/only line
+    eval_data = json.loads(f.read().strip())
+
+# Already processed this one
+TRAJECTORY = np.array(eval_data['trajectory'])
+GRIPPER_CLOSE_TIME = eval_data['gripper_close_time']
+GRIPPER_OPEN_TIME = eval_data['gripper_open_time']
+
+print(f"[EVAL] Loaded trajectory: {len(TRAJECTORY)} timesteps")
+print(f"[EVAL] Gripper close: t={GRIPPER_CLOSE_TIME}, open: t={GRIPPER_OPEN_TIME}")
+
+# Same pickup sequence as learned_thrower_controller
 BLOCK_START_POS = np.concatenate((np.array(block.getPosition()) - np.array(robot.getPosition()), [0,0,0]))
-
 BASE_POSE = [1.2, -1.2, 1.5, -2.0, -1.57, 1.03]
-
-# Load learned policy
-OUT_FOLDER = os.path.join(os.path.dirname(__file__), 'policy_weights')
-POLICY_PATH = os.path.join(OUT_FOLDER, 'learned_policy.pkl')
-POLICY_LOADED = False
-LEARNED_TRAJECTORY = None
-LEARNED_N_STEPS = 0
-
-try:
-    with open(POLICY_PATH, 'rb') as f:
-        policy_data = pickle.load(f)
-    LEARNED_TRAJECTORY = policy_data['q_trajectory']
-    LEARNED_N_STEPS = len(LEARNED_TRAJECTORY)
-    POLICY_LOADED = True
-    print(f"[LEARNED] Loaded policy with {LEARNED_N_STEPS} timesteps")
-    print(f"[LEARNED] Start pose: {policy_data['start_pose']}")
-    print(f"[LEARNED] End pose: {policy_data['end_pose']}")
-except FileNotFoundError:
-    print(f"[WARNING] No learned policy found at {POLICY_PATH}")
-    print("[WARNING] Run train_policy.py first to generate learned_policy.pkl")
-    print("[WARNING] Falling back to linear interpolation")
-    # Fallback to naive approach
-    START_THROW_POSE = np.array([2.7, -1.22, 1.75, -2.1, -1.57, 3.14])
-    END_THROW_POSE = np.array([2.7, -1.22, 1, -3, -1.57, 3.14])
-    LEARNED_N_STEPS = 30
-
 MOVE_TIME = 50
+CHECKPOINT_X = -0.67
+TABLE_Z = 0.715
 
-class Arm:
-    def __init__(self):
-        self.start_pose = None
-        self.end_pose = None
-        self.throw_step = 0
+# Load start throw pose from trajectory
+START_THROW_POSE = TRAJECTORY[0]
 
-    def get_pose(self, t: int, last_pose):
-        if t < 50:
-            return BASE_POSE + [0]
-        elif t < 100:
-            return np.concatenate((getDesiredRobotCommand(0, BLOCK_START_POS, last_pose), [0]))
-        elif t < 130:
-            return np.concatenate((getDesiredRobotCommand(0, BLOCK_START_POS, last_pose), [1]))
-        elif t < 150:
-            desired_pose = BLOCK_START_POS.copy()
-            desired_pose[2] += 0.1  # lift 10cm above block
-            return np.concatenate((getDesiredRobotCommand(0, desired_pose, last_pose), [1]))
-        elif t < 150 + MOVE_TIME:
-            if self.start_pose is None:
-                self.start_pose = last_pose.copy()
-                self.end_pose = START_THROW_POSE
-            
-            progress = (t - 150) / MOVE_TIME
-            joints = (1 - progress) * self.start_pose + progress * self.end_pose
-            
-            if progress >= 1.0:
-                self.start_pose = None
-                self.end_pose = None
-            return np.concatenate((joints, [1]))
-        elif t < 150 + MOVE_TIME + LEARNED_N_STEPS:
-            # Execute learned trajectory
-            self.throw_step = t - (150 + MOVE_TIME)
-            
-            if POLICY_LOADED:
-                joints = LEARNED_TRAJECTORY[self.throw_step]
-            else:
-                # Fallback: linear interpolation
-                progress = self.throw_step / LEARNED_N_STEPS
-                joints = (1 - progress) * START_THROW_POSE + progress * END_THROW_POSE
-            
-            # Release at -3 radians or at end of trajectory
-            gripper = [1] if (joints[3] > -3.0 and self.throw_step < LEARNED_N_STEPS - 5) else [0]
-            
-            return np.concatenate((joints, gripper))
-        else:
-            # Hold final pose
-            if POLICY_LOADED:
-                return np.concatenate((LEARNED_TRAJECTORY[-1], [0]))
-            else:
-                return np.concatenate((END_THROW_POSE, [0]))
+
+# Tracking variables
+checkpoint_reached = False
+block_dropped = False
+release_velocity = None
+final_distance = 0.0
+block_pos_at_release = None
+landed = False
+block_land_pos = None
 
 tt = 0
-last_pose = BASE_POSE
+last_pose = np.array(BASE_POSE)
 
-thrower = Arm()
+# Phase tracking
+start_pose = None
+end_pose = None
 
-while sup.step(timestep) != -1:
+pos_at_passing = None
 
-    t = sup.getTime()    
+while sup.step(timestep) != -1 and not landed:
+    # Get block position
+    block_pos = np.array(block.getPosition())
+    robot_pos = np.array(robot.getPosition())
+    arm_pos = fk(last_pose)[:3]
+    block_rel_pos = block_pos - robot_pos
 
-    cur_pose = thrower.get_pose(tt, last_pose[:-1])
+    # Execute pickup sequence then trajectory
+    if tt < 50:
+        # Move to base pose
+        joints = BASE_POSE
+        gripper = 0
+        
+    elif tt < 100:
+        # Move to block
+        joints = getDesiredRobotCommand(0, BLOCK_START_POS, last_pose)
+        gripper = 0
+        
+    elif tt < GRIPPER_CLOSE_TIME:
+        # Position over block
+        joints = getDesiredRobotCommand(0, BLOCK_START_POS, last_pose)
+        gripper = 1
+        
+    elif tt == GRIPPER_CLOSE_TIME:
+        # Close gripper
+        joints = getDesiredRobotCommand(0, BLOCK_START_POS, last_pose)
+        gripper = 1
+        
+    elif tt < 150:
+        # Lift block
+        desired_pose = BLOCK_START_POS.copy()
+        desired_pose[2] += 0.1  # lift 10cm
+        joints = getDesiredRobotCommand(0, desired_pose, last_pose)
+        gripper = 1
+        
+    elif tt < 150 + MOVE_TIME:
+        # Move to throw start position
+        if start_pose is None:
+            start_pose = last_pose.copy()
+            end_pose = START_THROW_POSE
+        
+        progress = (tt - 150) / MOVE_TIME
+        joints = (1 - progress) * start_pose + progress * end_pose
+        gripper = 1
+        
+    elif tt < 150 + MOVE_TIME + len(TRAJECTORY):
+        # Execute trajectory
+        traj_step = tt - (150 + MOVE_TIME)
+        joints = TRAJECTORY[traj_step]
+        
+        # Handle gripper release
+        if tt == GRIPPER_OPEN_TIME and gripper:
+            gripper = 0
+            
+    else:
+        # Continue simulation until block lands (passes through the table plane)
+        joints = TRAJECTORY[-1]
+        gripper = 0
+        
+        if not checkpoint_reached and block_pos[0] < CHECKPOINT_X:
+            checkpoint_reached = True
+            pos_at_passing = block_pos.copy()
+        
+        if not landed and block_pos[2] < TABLE_Z:
+            landed = True
+            block_land_pos = block_rel_pos.copy()
+
+    # Apply commands
     for j, motor in enumerate(motors):
-        motor.setPosition(cur_pose[j])
-    set_gripper_normalized(cur_pose[-1])
+        motor.setPosition(joints[j])
+    set_gripper(gripper == 1)
 
-    if tt % 50 == 0:
-        print(f"[{tt}] Thrower Config: ", cur_pose)
-        print(f"[{tt}] Thrower End: ", fk(cur_pose)[:3])
-        print(f"[{tt}] Thrower Block Pos: ", np.array(block.getPosition()) - np.array(robot.getPosition()))
-
-    last_pose = cur_pose
+    # Check if block dropped during pickup/throw
+    # Block has dropped if:
+    # 1. Gripper should be closed (gripper_closed=True)
+    # 2. Block is too far from gripper (>0.15m)
+    # 3. Gripper fingers are not actually closed (<0.5, indicating nothing is gripping)
+    if tt > 150 + MOVE_TIME and not block_dropped:
+        joints_pos = get_joint_positions()
+        block_gripper_dist = np.linalg.norm(block_rel_pos - fk(joints_pos)[:3])
+        if block_gripper_dist > 0.08:
+            block_dropped = True
+            release_velocity = block.getVelocity()
+            block_pos_at_release = block_rel_pos.copy()
+            print(f"[EVAL] Block released at t={tt}")
+    last_pose = np.array(joints)
     tt += 1
