@@ -11,5 +11,6 @@ eval_result.json
 ppo_rl_test.zip
 
 wandb/
-rl_outputs/
+**/rl_outputs/*
+!**/rl_outputs/best_traj-example.json
 .env
