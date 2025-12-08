@@ -5,6 +5,11 @@ import os
 import numpy as np
 import json
 import time
+import gc
+import dotenv
+
+dotenv.load_dotenv()
+STEP_PER_RESET = int(os.getenv('STEP_PER_RESET', '100'))
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
@@ -70,6 +75,7 @@ def get_joint_positions():
 # Load evaluation data
 # -----------------------------------------------------------------------------
 last_run_id = ""
+runs = 0
 
 while True:
     print("[SIM] Starting simulation wait loop for eval data")
@@ -269,13 +275,22 @@ while True:
         "final arm pos (rel. arm base)": arm_pos.tolist(),
         "final block pos (rel. arm base)": block_rel_pos.tolist(),
     }
+    
+    runs += 1
 
     with open(result_archive_path, 'a') as f:
         f.write(json.dumps(result) + '\n')
 
     print(f"[EVAL] Results: success={result['success']}, velocity={release_velocity[:3]}, displacement={block_land_pos}m")
 
+    if runs >= 10:
+        sup.simulationQuit(0)
+
     print("[SIM] Resetting simulation for next evaluation run")
+
+    del eval_data
+    del TRAJECTORY
+    gc.collect()
 
     sup.simulationReset()
     sup.step(timestep)  # needed after reset

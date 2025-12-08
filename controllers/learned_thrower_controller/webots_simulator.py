@@ -82,11 +82,11 @@ class WebotsSimulator:
         with open(archive_path, 'a') as f:
             f.write(json.dumps(eval_data) + '\n')
         
-        # Run simulation
-        result = self._run_simulation()
+       
         
         while True:
             time.sleep(0.1)
+            result = self._run_simulation()
             try:
                 with open(result_path, 'r') as f:
                     result = json.loads(f.read().strip())
@@ -106,6 +106,8 @@ class WebotsSimulator:
         if self.process is not None:
             if self.process.poll() is None:
                 return
+
+        print("[SIM] Launching Webots simulator")
 
         # Build Webots command
         if self.headless:

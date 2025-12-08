@@ -12,8 +12,11 @@ import gym
 import numpy as np
 from gym import spaces
 from scipy.interpolate import CubicSpline
+import json
 
 from webots_simulator import WebotsSimulator
+
+OUTPUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'rl_outputs'))
 
 class WebotsThrowEnv(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -37,21 +40,18 @@ class WebotsThrowEnv(gym.Env):
         self.run_name = run_name
         # Per-environment episode counter. incremented at each reset()
         self.episode_counter = 0
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
         self.best_reward = -np.inf
-        self.best_traj = None
->>>>>>> parent of 8f1b4bd (fix mem issue and clean up old stuff)
-=======
->>>>>>> parent of 538d73a (add best traj saving and clean up rl)
 
-        # Action: knot values for active joints, flattened (n_active * n_knots)
-        self.action_dim = self.n_active * self.n_knots
+        # Action: knot values for active joints, flattened (n_active * n_knots) and gripper open/close time
+        self.action_dim = self.n_active * self.n_knots + 1
         # Reasonable bounds: use joint limits from simulator/dynamics assumption
         joint_min = -2 * np.pi
         joint_max = 2 * np.pi
-        self.action_space = spaces.Box(low=joint_min, high=joint_max, shape=(self.action_dim,), dtype=np.float32)
+
+        low = np.concatenate([np.full(self.n_active * self.n_knots, joint_min), np.array([0.0])])
+        high = np.concatenate([np.full(self.n_active * self.n_knots, joint_max), np.array([1.0])])
+        
+        self.action_space = spaces.Box(low=low, high=high, shape=(self.action_dim,), dtype=np.float32)
 
         # Observation: simple vector with start and end poses (can be expanded later)
         self.observation_space = spaces.Box(low=-10.0, high=10.0, shape=(12,), dtype=np.float32)
@@ -89,13 +89,14 @@ class WebotsThrowEnv(gym.Env):
     def step(self, action):
         # Action -> trajectory
         action = np.clip(action, self.action_space.low, self.action_space.high)
-        q_traj = self._knots_to_traj(action, n_timesteps=30)
+        release_param = action[-1]
+        q_traj = self._knots_to_traj(action[:-1], n_timesteps=30)
 
         # Run evaluation in Webots
         sim_result = self.sim.evaluate_trajectory(
             q_trajectory=q_traj,
             gripper_close_time=130,
-            gripper_open_time=150 + 50 + len(q_traj),
+            gripper_open_time=150 + 50 + int(release_param * len(q_traj)),
             # pass the episode counter so the simulator and controller know which trial this is
             train_step=int(self.episode_counter)
         )
@@ -131,25 +132,20 @@ class WebotsThrowEnv(gym.Env):
         done = True  # one-shot episode
         info = sim_result
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
         if success and reward > self.best_reward:
             self.best_reward = reward
-            self.best_traj = {
+            best_traj = {
                 'run_name': self.run_name,
+                'reward': float(reward),
                 'trajectory': q_traj.tolist(),
                 'gripper_close_time': int(130),
                 'gripper_open_time': 150 + 50 + int(release_param * len(q_traj))
             }
-            eval_data_path = os.path.join(OUTPUT_DIR, 'best_traj.json')
+            eval_data_path = os.path.join(OUTPUT_DIR, f'best_traj-{self.run_name}.json')
             os.makedirs(OUTPUT_DIR, exist_ok=True)
             with open(eval_data_path, 'w') as f:
-                f.write(json.dumps(self.best_traj) + '\n')
+                f.write(json.dumps(best_traj) + '\n')
 
->>>>>>> parent of 8f1b4bd (fix mem issue and clean up old stuff)
-=======
->>>>>>> parent of 538d73a (add best traj saving and clean up rl)
         print(f"[Env] Episode {self.episode_counter} reward: {reward}")
         print(f"      Details: success={success}, hor_speed={hor_speed:.2f}, vertical_speed={vz:.2f}, final_distance={final_distance:.2f}")
         return obs, float(reward), done, info

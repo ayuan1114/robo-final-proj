@@ -60,11 +60,12 @@ def make_env(args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--run-name', type=str, default='rl_run')
-    parser.add_argument('--timesteps', type=int, default=4096)
-    parser.add_argument('--n-knots', dest='n_knots', type=int, default=5)
+    parser.add_argument('--timesteps', type=int, default=1000)
+    parser.add_argument('--n-knots', dest='n_knots', type=int, default=2)
     parser.add_argument('--gui', action='store_true')
-    parser.add_argument('--world', type=str, default=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'worlds', 'train.wbt')))
     args = parser.parse_args()
+
+    args.world = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'worlds', 'train.wbt'))
 
     n_envs = 1
 
