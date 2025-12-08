@@ -70,7 +70,6 @@ def get_joint_positions():
 # -----------------------------------------------------------------------------
 # Load evaluation data
 # -----------------------------------------------------------------------------
-last_run_id = ""
 
 while True:
     print("[SIM] Starting simulation wait loop for eval data")
@@ -85,7 +84,6 @@ while True:
                 # Read first/only line
                 eval_data = json.loads(f.read().strip())
             
-                if eval_data['run_id'] != last_run_id:
                 if eval_data['run_id'] == 'done training':
                     sup.simulationQuit(0)
                 # Already processed this one
