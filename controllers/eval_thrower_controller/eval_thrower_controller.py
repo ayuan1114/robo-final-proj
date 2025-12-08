@@ -5,7 +5,6 @@ import os
 import numpy as np
 import json
 import time
-import gc
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
@@ -85,17 +84,10 @@ while True:
                 eval_data = json.loads(f.read().strip())
             
             if eval_data['run_id'] != last_run_id:
+                if eval_data['run_id'] == 'done training':
+                    sup.simulationQuit(0)
                 # Already processed this one
-                # Prefer memory-mapped .npy trajectories when available to
-                # avoid large JSON payloads being loaded into memory.
-                if 'trajectory_path' in eval_data and os.path.exists(eval_data['trajectory_path']):
-                    try:
-                        TRAJECTORY = np.load(eval_data['trajectory_path'], mmap_mode='r')
-                    except Exception:
-                        # Fall back to embedded trajectory list if load fails
-                        TRAJECTORY = np.array(eval_data.get('trajectory', []))
-                else:
-                    TRAJECTORY = np.array(eval_data.get('trajectory', []))
+                TRAJECTORY = np.array(eval_data['trajectory'])
                 GRIPPER_CLOSE_TIME = eval_data['gripper_close_time']
                 GRIPPER_OPEN_TIME = eval_data['gripper_open_time']
                 
@@ -286,6 +278,7 @@ while True:
     print(f"[EVAL] Results: success={result['success']}, velocity={release_velocity[:3]}, displacement={block_land_pos}m")
 
     print("[SIM] Resetting simulation for next evaluation run")
+<<<<<<< HEAD
     # Release large in-memory objects as soon as possible
     # For memory-mapped arrays, we need to explicitly delete the reference
     # and force garbage collection to free the file handle
@@ -297,6 +290,8 @@ while True:
     
     # Force garbage collection to release file handles from memory-mapped arrays
     gc.collect()
+=======
+>>>>>>> parent of 8f1b4bd (fix mem issue and clean up old stuff)
 
     sup.simulationReset()
     sup.step(timestep)  # needed after reset

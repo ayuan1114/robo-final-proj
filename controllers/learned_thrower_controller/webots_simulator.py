@@ -80,23 +80,11 @@ class WebotsSimulator:
         run_id = str(uuid.uuid4())
         print(f"[SIM] Starting run_id={run_id} train_step={train_step}")
 
-        # Save trajectory as a compact binary `.npy` with float32 to avoid
-        # embedding large JSON payloads in eval_data. The controller can
-        # memory-map this file to avoid loading the entire trajectory into RAM.
-        policy_weights_dir = os.path.join(os.path.dirname(__file__), 'trajectory_archive')
-        os.makedirs(policy_weights_dir, exist_ok=True)
-
-        traj_fname = f'eval_traj_{self.run_name}_{run_id}.npy'
-        traj_path = os.path.join(policy_weights_dir, traj_fname)
-        # Save as float32 to reduce size
-        np.save(traj_path, np.asarray(q_trajectory, dtype=np.float32))
-
         eval_data = {
             'run_id': run_id,
             'run_name': self.run_name,
             'train_step': train_step,
-            # Provide path to binary trajectory file instead of embedding the list
-            'trajectory_path': traj_path,
+            'trajectory': q_trajectory.tolist(),
             'render': not self.headless,
             'gripper_close_time': int(gripper_close_time),
             'gripper_open_time': int(gripper_open_time)
@@ -105,19 +93,14 @@ class WebotsSimulator:
         eval_data_path = os.path.join(controller_dir, 'eval_data.json')
         with open(eval_data_path, 'w') as f:
             f.write(json.dumps(eval_data) + '\n')
-
-        # Archive trajectory metadata (path + run info) for later inspection
+        
+        # Archive trajectory to policy_weights for later testing
+        policy_weights_dir = os.path.join(os.path.dirname(__file__), 'trajectory_archive')
+        os.makedirs(policy_weights_dir, exist_ok=True)
+        
         archive_path = os.path.join(policy_weights_dir, f'eval_traj_{self.run_name}.jsonl')
-        archive_entry = {
-            'run_id': run_id,
-            'run_name': self.run_name,
-            'train_step': train_step,
-            'trajectory_path': traj_path,
-            'gripper_close_time': int(gripper_close_time),
-            'gripper_open_time': int(gripper_open_time)
-        }
         with open(archive_path, 'a') as f:
-            f.write(json.dumps(archive_entry) + '\n')
+            f.write(json.dumps(eval_data) + '\n')
         
         # Run simulation
         # Increment run counter and possibly restart Webots to avoid memory growth
