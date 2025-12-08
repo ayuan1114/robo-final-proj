@@ -9,17 +9,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 from controller import Robot, Supervisor
 from utils.ik import getDesiredRobotCommand, fk
 
-# -----------------------------------------------------------------------------
-# Init
-# -----------------------------------------------------------------------------
+# initialize the supervisor, robot, and timestep
 sup = Supervisor()
 robot = sup.getFromDef("CATCHER")
 block = sup.getFromDef("BLOCK")
 timestep = int(sup.getBasicTimeStep())
 
-# -----------------------------------------------------------------------------
-# UR5e arm joints (6-DoF)
-# -----------------------------------------------------------------------------
+# initialize URe5 arm moters (6 DOF)
 arm_joint_names = [
     "shoulder_pan_joint",
     "shoulder_lift_joint",
@@ -86,9 +82,7 @@ def set_gripper_width_mm(width_mm, max_open_mm=85.0):
     width_mm = float(np.clip(width_mm, 0.0, max_open_mm))
     set_gripper_normalized(1.0 - width_mm / max_open_mm)
 
-# -----------------------------------------------------------------------------
-# Main loop
-# -----------------------------------------------------------------------------
+# main loop/logic
 
 CATCH_X = -0.67
 PASSED = False
