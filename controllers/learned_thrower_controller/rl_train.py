@@ -45,6 +45,7 @@ except Exception as e:
 # Import the Gym wrapper after verifying gym is available
 from webots_gym_env import WebotsThrowEnv
 
+OUTPUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'rl_outputs'))
 
 def make_env(args):
     world = args.world
@@ -55,7 +56,6 @@ def make_env(args):
                          run_name=args.run_name,
                          show_gui=args.gui)
     return env
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -136,13 +136,13 @@ def main():
         # still use sim result callback (will print if wandb not installed)
         model.learn(total_timesteps=args.timesteps, callback=sim_cb)
 
-    save_path = os.path.join(os.path.dirname(__file__), f'ppo_{args.run_name}.zip')
+    save_path = os.path.join(OUTPUT_DIR, f'ppo_{args.run_name}.zip')
     model.save(save_path)
     print(f"Saved model to {save_path}")
 
-    
+        
 
-    print('Done traingin, terminating sim')
+    print('Done training, terminating sim')
     
     eval_data_path = os.path.join('..', 'eval_thrower_controller', 'eval_data.json')
     payload = {

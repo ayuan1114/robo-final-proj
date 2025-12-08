@@ -69,6 +69,7 @@ def get_joint_positions():
 # -----------------------------------------------------------------------------
 # Load evaluation data
 # -----------------------------------------------------------------------------
+last_run_id = ""
 
 while True:
     print("[SIM] Starting simulation wait loop for eval data")
@@ -84,6 +85,8 @@ while True:
                 eval_data = json.loads(f.read().strip())
             
             if eval_data['run_id'] != last_run_id:
+                if eval_data['run_id'] == 'done training':
+                    sup.simulationQuit(0)
                 # Already processed this one
                 TRAJECTORY = np.array(eval_data['trajectory'])
                 GRIPPER_CLOSE_TIME = eval_data['gripper_close_time']
@@ -93,9 +96,6 @@ while True:
                 print(f"[EVAL] Gripper close: t={GRIPPER_CLOSE_TIME}, open: t={GRIPPER_OPEN_TIME}")
 
                 break  # exit inner wait loop
-
-            if eval_data['run_id'] == 'done training':
-                sup.simulationQuit(0)
             
         except FileNotFoundError:
             print(f"[ERROR] No eval data found at {eval_data_path}")
@@ -276,20 +276,6 @@ while True:
     print(f"[EVAL] Results: success={result['success']}, velocity={release_velocity[:3]}, displacement={block_land_pos}m")
 
     print("[SIM] Resetting simulation for next evaluation run")
-<<<<<<< HEAD
-    # Release large in-memory objects as soon as possible
-    # For memory-mapped arrays, we need to explicitly delete the reference
-    # and force garbage collection to free the file handle
-    try:
-        if 'TRAJECTORY' in locals():
-            del TRAJECTORY
-    except Exception:
-        pass
-    
-    # Force garbage collection to release file handles from memory-mapped arrays
-    gc.collect()
-=======
->>>>>>> parent of 8f1b4bd (fix mem issue and clean up old stuff)
 
     sup.simulationReset()
     sup.step(timestep)  # needed after reset
