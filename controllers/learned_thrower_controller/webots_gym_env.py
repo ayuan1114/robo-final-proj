@@ -38,10 +38,13 @@ class WebotsThrowEnv(gym.Env):
         # Per-environment episode counter. incremented at each reset()
         self.episode_counter = 0
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         self.best_reward = -np.inf
         self.best_traj = None
 >>>>>>> parent of 8f1b4bd (fix mem issue and clean up old stuff)
+=======
+>>>>>>> parent of 538d73a (add best traj saving and clean up rl)
 
         # Action: knot values for active joints, flattened (n_active * n_knots)
         self.action_dim = self.n_active * self.n_knots
@@ -129,6 +132,7 @@ class WebotsThrowEnv(gym.Env):
         info = sim_result
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         if success and reward > self.best_reward:
             self.best_reward = reward
@@ -144,6 +148,8 @@ class WebotsThrowEnv(gym.Env):
                 f.write(json.dumps(self.best_traj) + '\n')
 
 >>>>>>> parent of 8f1b4bd (fix mem issue and clean up old stuff)
+=======
+>>>>>>> parent of 538d73a (add best traj saving and clean up rl)
         print(f"[Env] Episode {self.episode_counter} reward: {reward}")
         print(f"      Details: success={success}, hor_speed={hor_speed:.2f}, vertical_speed={vz:.2f}, final_distance={final_distance:.2f}")
         return obs, float(reward), done, info

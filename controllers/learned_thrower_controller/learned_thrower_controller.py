@@ -92,8 +92,6 @@ def set_gripper_width_mm(width_mm, max_open_mm=85.0):
 # Main loop
 # -----------------------------------------------------------------------------
 
-<<<<<<< HEAD
-=======
 eval_data_path = os.path.join(os.path.dirname(__file__), "rl_outputs", "best_traj.json")
 
 with open(eval_data_path, 'r') as f:
@@ -109,7 +107,6 @@ print(f"[EVAL] Loaded trajectory: {len(TRAJECTORY)} timesteps")
 print(f"[EVAL] Gripper close: t={GRIPPER_CLOSE_TIME}, open: t={GRIPPER_OPEN_TIME}")
 
 # Same pickup sequence as learned_thrower_controller
->>>>>>> parent of 8f1b4bd (fix mem issue and clean up old stuff)
 BLOCK_START_POS = np.concatenate((np.array(block.getPosition()) - np.array(robot.getPosition()), [0,0,0]))
 
 BASE_POSE = [1.2, -1.2, 1.5, -2.0, -1.57, 1.03]

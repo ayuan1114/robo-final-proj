@@ -84,8 +84,6 @@ while True:
                 eval_data = json.loads(f.read().strip())
             
             if eval_data['run_id'] != last_run_id:
-                if eval_data['run_id'] == 'done training':
-                    sup.simulationQuit(0)
                 # Already processed this one
                 TRAJECTORY = np.array(eval_data['trajectory'])
                 GRIPPER_CLOSE_TIME = eval_data['gripper_close_time']
