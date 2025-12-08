@@ -84,8 +84,7 @@ while True:
                 # Read first/only line
                 eval_data = json.loads(f.read().strip())
             
-                if eval_data['run_id'] == 'done training':
-                    sup.simulationQuit(0)
+            if eval_data['run_id'] != last_run_id:
                 # Already processed this one
                 # Prefer memory-mapped .npy trajectories when available to
                 # avoid large JSON payloads being loaded into memory.
@@ -104,6 +103,9 @@ while True:
                 print(f"[EVAL] Gripper close: t={GRIPPER_CLOSE_TIME}, open: t={GRIPPER_OPEN_TIME}")
 
                 break  # exit inner wait loop
+
+            if eval_data['run_id'] == 'done training':
+                sup.simulationQuit(0)
             
         except FileNotFoundError:
             print(f"[ERROR] No eval data found at {eval_data_path}")
