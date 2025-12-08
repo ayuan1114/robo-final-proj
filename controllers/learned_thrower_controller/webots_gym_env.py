@@ -41,7 +41,6 @@ class WebotsThrowEnv(gym.Env):
         # Per-environment episode counter. incremented at each reset()
         self.episode_counter = 0
         self.best_reward = -np.inf
-        self.best_traj = None
 
         # Action: knot values for active joints, flattened (n_active * n_knots) and gripper open/close time
         self.action_dim = self.n_active * self.n_knots + 1
@@ -133,18 +132,20 @@ class WebotsThrowEnv(gym.Env):
         done = True  # one-shot episode
         info = sim_result
 
-        if success and reward > self.best_reward:
+        
+        
+        if success and self.best_reward < reward:
+            eval_data_path = os.path.join(OUTPUT_DIR, f'last_traj-{self.run_name}.json')
             self.best_reward = reward
-            self.best_traj = {
-                'run_name': self.run_name,
-                'trajectory': q_traj.tolist(),
-                'gripper_close_time': int(130),
-                'gripper_open_time': 150 + 50 + int(release_param * len(q_traj))
-            }
-            eval_data_path = os.path.join(OUTPUT_DIR, 'best_traj.json')
-            os.makedirs(OUTPUT_DIR, exist_ok=True)
             with open(eval_data_path, 'w') as f:
-                f.write(json.dumps(self.best_traj) + '\n')
+                best_traj = {
+                        'run_name': self.run_name,
+                        'reward': float(reward),
+                        'trajectory': q_traj.tolist(),
+                        'gripper_close_time': int(130),
+                        'gripper_open_time': 150 + 50 + int(release_param * len(q_traj))
+                    } 
+                f.write(json.dumps(best_traj) + '\n')
 
         print(f"[Env] Episode {self.episode_counter} reward: {reward}")
         print(f"      Details: success={success}, hor_speed={hor_speed:.2f}, vertical_speed={vz:.2f}, final_distance={final_distance:.2f}")

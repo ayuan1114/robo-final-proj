@@ -5,6 +5,7 @@ import os
 import numpy as np
 import json
 import time
+import gc
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
@@ -84,11 +85,20 @@ while True:
                 # Read first/only line
                 eval_data = json.loads(f.read().strip())
             
-            if eval_data['run_id'] != last_run_id:
+                if eval_data['run_id'] != last_run_id:
                 if eval_data['run_id'] == 'done training':
                     sup.simulationQuit(0)
                 # Already processed this one
-                TRAJECTORY = np.array(eval_data['trajectory'])
+                # Prefer memory-mapped .npy trajectories when available to
+                # avoid large JSON payloads being loaded into memory.
+                if 'trajectory_path' in eval_data and os.path.exists(eval_data['trajectory_path']):
+                    try:
+                        TRAJECTORY = np.load(eval_data['trajectory_path'], mmap_mode='r')
+                    except Exception:
+                        # Fall back to embedded trajectory list if load fails
+                        TRAJECTORY = np.array(eval_data.get('trajectory', []))
+                else:
+                    TRAJECTORY = np.array(eval_data.get('trajectory', []))
                 GRIPPER_CLOSE_TIME = eval_data['gripper_close_time']
                 GRIPPER_OPEN_TIME = eval_data['gripper_open_time']
                 
@@ -276,6 +286,12 @@ while True:
     print(f"[EVAL] Results: success={result['success']}, velocity={release_velocity[:3]}, displacement={block_land_pos}m")
 
     print("[SIM] Resetting simulation for next evaluation run")
+    # Release large in-memory objects as soon as possible
+    try:
+        del TRAJECTORY
+    except Exception:
+        pass
+    gc.collect()
 
     sup.simulationReset()
     sup.step(timestep)  # needed after reset

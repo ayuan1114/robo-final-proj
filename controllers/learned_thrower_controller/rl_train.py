@@ -15,6 +15,7 @@ import argparse
 import os
 import sys
 import numpy as np
+import gc
 
 # Check for gym and stable-baselines3 and give actionable diagnostics if missing.
 try:
@@ -60,12 +61,12 @@ def make_env(args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--run-name', type=str, default='rl_run')
-    parser.add_argument('--timesteps', type=int, default=4096)
-    parser.add_argument('--n-knots', dest='n_knots', type=int, default=5)
+    parser.add_argument('--timesteps', type=int, default=1000)
+    parser.add_argument('--n-knots', dest='n_knots', type=int, default=3)
     parser.add_argument('--gui', action='store_true')
-    parser.add_argument('--world', type=str, default=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'worlds', 'train.wbt')))
     args = parser.parse_args()
 
+    args.world = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'worlds', 'train.wbt'))
     n_envs = 1
 
     env = DummyVecEnv([lambda: make_env(args)] * n_envs)
@@ -108,13 +109,25 @@ def main():
                         continue
                     try:
                         import wandb
-                        wandb.log(log_dict, step=self.num_timesteps)
+                        # Avoid logging with a step smaller than wandb's current step
+                        # which causes the monotonic-step warning. If the callback's
+                        # num_timesteps is >= wandb.run.step, log with that step.
+                        # Otherwise fall back to logging without an explicit step so
+                        # wandb uses its internal monotonically increasing step.
+                        current_wandb_step = getattr(getattr(wandb, 'run', None), 'step', None)
+                        if current_wandb_step is None or self.num_timesteps >= current_wandb_step:
+                            wandb.log(log_dict, step=self.num_timesteps)
+                        else:
+                            # log without step to avoid out-of-order warnings
+                            wandb.log(log_dict)
                     except Exception:
                         if self.verbose:
                             print("SimResult (no wandb):", log_dict)
             except Exception as e:
                 if self.verbose:
                     print("SimResultLoggingCallback error:", e)
+            finally:
+                gc.collect()
 
     sim_cb = SimResultLoggingCallback(verbose=1)
 

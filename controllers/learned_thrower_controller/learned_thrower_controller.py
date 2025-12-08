@@ -68,7 +68,8 @@ def get_joint_positions():
 # Main loop
 # -----------------------------------------------------------------------------
 
-eval_data_path = os.path.join(os.path.dirname(__file__), "rl_outputs", "best_traj.json")
+TRAJ_FILE = 'best_traj.json'
+eval_data_path = os.path.join(os.path.dirname(__file__), "rl_outputs", TRAJ_FILE)
 
 with open(eval_data_path, 'r') as f:
     # Read first/only line
