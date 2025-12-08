@@ -285,10 +285,15 @@ while True:
 
     print("[SIM] Resetting simulation for next evaluation run")
     # Release large in-memory objects as soon as possible
+    # For memory-mapped arrays, we need to explicitly delete the reference
+    # and force garbage collection to free the file handle
     try:
-        del TRAJECTORY
+        if 'TRAJECTORY' in locals():
+            del TRAJECTORY
     except Exception:
         pass
+    
+    # Force garbage collection to release file handles from memory-mapped arrays
     gc.collect()
 
     sup.simulationReset()

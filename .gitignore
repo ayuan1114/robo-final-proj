@@ -12,3 +12,4 @@ ppo_rl_test.zip
 
 wandb/
 rl_outputs/
+.env

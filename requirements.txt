@@ -7,3 +7,5 @@ stable-baselines3
 # torch: install the appropriate wheel for your system (CPU/CUDA). Example:
 # pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 torch>=1.13.0
+psutil>=5.9.0
+dotenv
