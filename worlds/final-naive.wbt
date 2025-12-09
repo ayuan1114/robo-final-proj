@@ -48,6 +48,27 @@ DEF BLOCK Solid {
     mass 0.01
   }
 }
+DEF TARGET Solid {
+  translation -0.6 3.0 0.75
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          emissiveColor 1 0 0
+        }
+      }
+      geometry Box {
+        size 0.03 0.06 0.06
+      }
+    }
+  ]
+  boundingObject Box {
+    size 0.03 0.06 0.06
+  }
+  physics Physics {
+    mass 0.01
+  }
+}
 DEF THROWER UR5e {
   hidden rotation_10 -1 0 0 6.613900161681512e-06
   hidden rotation_15 -1 0 0 1.0762435237836832e-05
