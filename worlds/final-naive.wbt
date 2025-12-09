@@ -1,0 +1,158 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/Floor.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/BakelitePlastic.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Plaster.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/tables/protos/Table.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/BrushedAluminium.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Parquetry.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Wall.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/devices/robotiq/protos/Robotiq2f85Gripper.proto"
+EXTERNPROTO "../protos/UR5e.proto"
+
+WorldInfo {
+  info [
+    "This example showcases throwing and catching with the UR5e arm."
+  ]
+  title "Throw catch demo"
+  basicTimeStep 16
+  contactProperties [
+    ContactProperties {
+    }
+  ]
+}
+DEF VIEWPOINT Viewpoint {
+  orientation -0.09866468420170614 0.0027493923875141937 0.995116938320757 3.632648594360225
+  position 2.4137971053182143 3.7122954316877914 1.2693671060064997
+  ambientOcclusionRadius 1
+}
+DEF BLOCK Solid {
+  translation 1 2.8 0.75
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          emissiveColor 1 0 0
+        }
+      }
+      geometry Box {
+        size 0.03 0.03 0.03
+      }
+    }
+  ]
+  boundingObject Box {
+    size 0.03 0.03 0.03
+  }
+  physics Physics {
+    mass 0.01
+  }
+}
+DEF THROWER UR5e {
+  hidden rotation_10 -1 0 0 6.613900161681512e-06
+  hidden rotation_15 -1 0 0 1.0762435237836832e-05
+  translation 1 2.2 0.7
+  name "thrower_arm"
+  controller "naive_thrower_controller"
+  supervisor TRUE
+  toolSlot [
+    Pose {
+      rotation 1 0 0 -1.570796
+      children [
+        Robotiq2f85Gripper {
+          name "robotiq_2f85_thrower"
+        }
+      ]
+    }
+    Pose {
+      translation -0.05 0 0
+      rotation 0 0 1 1.570796
+    }
+  ]
+}
+DEF CATCHER UR5e {
+  hidden rotation_10 -1 0 0 6.613900161681512e-06
+  hidden rotation_15 -1 0 0 1.0762435237836832e-05
+  translation -1 3.1 0.7
+  name "catcher_arm"
+  controller "catcher_controller"
+  supervisor TRUE
+  toolSlot [
+    Pose {
+      rotation 1 0 0 -1.570796
+      children [
+        Robotiq2f85Gripper {
+          name "robotiq_2f85_catcher"
+        }
+      ]
+    }
+    Pose {
+      translation -0.05 0 0
+      rotation 0 0 1 1.570796
+    }
+  ]
+}
+TexturedBackground {
+  texture "factory"
+  skybox FALSE
+}
+Floor {
+  translation 0 2.4 0
+  size 6.95 5
+  tileSize 2 2
+  appearance BakelitePlastic {
+    color "braun"
+  }
+}
+DEF ROOF Pose {
+  translation 0.06 5.545 3.65
+  rotation 0 1 0 3.141592644
+  children [
+    Shape {
+      appearance Plaster {
+        textureTransform TextureTransform {
+          scale 5.7 5.05
+        }
+      }
+      geometry Plane {
+        size 7.2 11.36
+      }
+    }
+  ]
+}
+Table {
+  translation 0 2.64217 -2.62797e-05
+  rotation 0 0 1 1.5708
+  name "table(4)"
+  size 1.2 2.2 0.7
+  feetSize 0.05 0.05
+  trayAppearance Parquetry {
+    type "light strip"
+    colorOverride 0.933333 0.8 0.8
+  }
+  legAppearance BrushedAluminium {
+    colorOverride 0.333 0.341 0.325
+  }
+}
+Pose {
+  translation 0.1 2.75 -0.27
+  children [
+    Pose {
+      translation 0.1 -0.1 0
+    }
+  ]
+}
+Wall {
+  translation 0.035 -0.025 0
+  rotation 0 0 1 4.712388966
+  name "wall(21)"
+  size 0.2 7.2 3.65
+  appearance Plaster {
+    colorOverride 1 0.7 0.7
+    textureTransform TextureTransform {
+      scale 3.7 2.4
+    }
+  }
+}
+Group {
+}
