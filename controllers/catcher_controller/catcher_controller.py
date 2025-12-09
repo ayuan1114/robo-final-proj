@@ -1,4 +1,4 @@
-"""ur5e_controller controller."""
+"""ur5e_controller controller - improved catching logic with tunable gripper timing."""
 
 import sys
 import os
@@ -29,14 +29,9 @@ for m in motors:
     ps = m.getPositionSensor()
     ps.enable(timestep)
 
-# -----------------------------------------------------------------------------
-# Robotiq 2F-85 gripper (two finger motors under toolSlot)
-# Names come from your world: Robotiq2f85Gripper { name "robotiq_2f85" }
-# So the device names are:
-#   "robotiq_2f85::left finger joint", "robotiq_2f85::right finger joint"
-# -----------------------------------------------------------------------------
+# Robotiq 2F-85 gripper setup
 GRIP_MIN = 0.0
-GRIP_MAX = 0.80  # typical range on actuated finger joints; adjust if needed
+GRIP_MAX = 0.80
 
 def _safe_get_device(name):
     try:
@@ -50,18 +45,16 @@ gripper_right = _safe_get_device("robotiq_2f85_catcher::right finger joint")
 if gripper_left and gripper_right:
     for g in (gripper_left, gripper_right):
         try:
-            g.setVelocity(1.5)
+            g.setVelocity(10.0)  # INCREASED from 5.0 - gripper closes faster!
         except Exception:
             pass
         try:
-            g.setForce(50.0)
+            g.setForce(200.0)  # INCREASED from 150.0 - stronger grip
         except Exception:
             pass
     print("[gripper] Robotiq 2F-85 finger motors found.")
 else:
-    print("[gripper] Could not find Robotiq 2F-85 motors. "
-          "Expected: 'robotiq_2f85::left finger joint' and "
-          "'robotiq_2f85::right finger joint'.")
+    print("[gripper] Could not find Robotiq 2F-85 motors.")
 
 def set_gripper_normalized(g):
     """g in [0,1]: 0=open, 1=closed."""
@@ -72,8 +65,40 @@ def set_gripper_normalized(g):
     gripper_left.setPosition(q)
     gripper_right.setPosition(q)
 
+def get_gripper_positions():
+    """Get actual gripper positions for debugging"""
+    if gripper_left and gripper_right:
+        left_sensor = gripper_left.getPositionSensor()
+        right_sensor = gripper_right.getPositionSensor()
+        if left_sensor and right_sensor:
+            left_sensor.enable(timestep)
+            right_sensor.enable(timestep)
+            return left_sensor.getValue(), right_sensor.getValue()
+    return None, None
+
 def get_joint_positions():
     return np.array([m.getPositionSensor().getValue() for m in motors])
+
+# ============================================================================
+# TUNABLE GRIPPER TIMING PARAMETERS - ADJUST THESE!
+# ============================================================================
+
+# Option 1: Distance-based triggering (recommended)
+USE_DISTANCE_TRIGGER = True
+GRIPPER_TRIGGER_DISTANCE = 0.46566667   # Start closing when block is this close (m)
+                                  # DECREASE if closing too early (try 0.06, 0.05, 0.04)
+                                  # INCREASE if closing too late (try 0.10, 0.12, 0.15)
+
+# Option 2: Time-based triggering
+USE_TIME_TRIGGER = False
+GRIPPER_TRIGGER_TIME = 0.15  # Start closing X seconds before intercept
+                              # DECREASE if closing too early (try 0.10, 0.08)
+                              # INCREASE if closing too late (try 0.20, 0.25)
+
+# Option 3: Hybrid (both triggers)
+USE_HYBRID_TRIGGER = False
+
+# ============================================================================
 
 # Constants
 CATCH_X = -0.67
@@ -81,16 +106,26 @@ GRAVITY = np.array([0.0, 0.0, -9.81])
 MAX_INTERCEPT_TIME = 3.0
 MIN_INTERCEPT_TIME = 0.1
 CATCH_MARGIN = 0.15
+GRIPPER_CATCH_DISTANCE = 0.12
+
+# Auto-timing variables (moved here from above)
+USE_AUTO_TIMING = True
+TARGET_GRIPPER_CLOSURE = 0.50
+GRIPPER_CLOSE_RATE = 0.10
+BLOCK_SPEED_ESTIMATE = 2.0
 
 # Thresholds for detecting when block is in flight
-MIN_THROW_VX = -0.3  # block moving toward catcher (negative x)
-MIN_SPEED = 0.5      # minimum total speed to consider "in flight"
-MIN_HEIGHT = 0.8     # block must be above table to be considered thrown
+MIN_THROW_VX = -0.3
+MIN_SPEED = 0.5
+MIN_HEIGHT = 0.8
 
 # State variables
 catching = False
 intercept_joints = None
 last_valid_prediction = None
+gripper_closing = False
+gripper_closed = False
+catch_success = False
 PASSED = False
 tt = 0
 
@@ -100,30 +135,25 @@ READY_POSE = [-0.343, -1.2, 1.5, -2.0, -1.57, 1.03]
 def is_block_in_flight(pos, vel):
     """Check if block is actually thrown and in flight"""
     speed = np.linalg.norm(vel[:3])
-    return (vel[0] < MIN_THROW_VX and  # moving toward catcher
-            speed > MIN_SPEED and        # moving fast enough
-            pos[2] > MIN_HEIGHT)         # above table
+    return (vel[0] < MIN_THROW_VX and
+            speed > MIN_SPEED and
+            pos[2] > MIN_HEIGHT)
 
 def predict_intercept(block_pos, block_vel, target_x):
     """Predict where block will be when it crosses target_x plane"""
     vx = block_vel[0]
     
-    # Need negative velocity (moving toward catcher)
     if vx >= -1e-6:
         return None, None
     
-    # Time to reach target x
     dt = (target_x - block_pos[0]) / vx
     
-    # Check if time is reasonable
     if dt < MIN_INTERCEPT_TIME or dt > MAX_INTERCEPT_TIME:
         return None, None
     
-    # Predict position with ballistic trajectory
     pred_pos = block_pos + block_vel[:3] * dt + 0.5 * GRAVITY * dt * dt
     
-    # Sanity checks on predicted position
-    if pred_pos[2] < 0.5 or pred_pos[2] > 2.0:  # reasonable height range
+    if pred_pos[2] < 0.5 or pred_pos[2] > 2.0:
         return None, None
     
     return dt, pred_pos
@@ -131,19 +161,13 @@ def predict_intercept(block_pos, block_vel, target_x):
 def compute_catch_joints(target_pos, robot_pos, current_joints):
     """Compute joint angles to reach target position"""
     try:
-        # Convert to relative position
         rel_pos = target_pos - robot_pos
         rel_pose = np.concatenate((rel_pos, [0, 0, 0]))
-        
-        # Get IK solution
         joints = getDesiredRobotCommand(0, rel_pose, current_joints)
         
-        # Validate solution
         if len(joints) == 6:
-            # Check if joints are in reasonable range
             if np.all(np.abs(joints) < 2 * np.pi):
                 return joints
-        
         return None
     except Exception as e:
         print(f"[catch] IK failed: {e}")
@@ -159,6 +183,13 @@ while sup.step(timestep) != -1:
     block_velocity = np.array(block.getVelocity()[:3])
     robot_pos = np.array(robot.getPosition())
     
+    # Calculate end effector position
+    end_effector_pos = fk(current_joints)[:3]
+    end_effector_world = end_effector_pos + robot_pos
+    
+    # Distance from block to gripper
+    block_to_gripper_dist = np.linalg.norm(block_position - end_effector_world)
+    
     # Smooth velocity with moving average
     vel_history.append(block_velocity)
     if len(vel_history) > VEL_HISTORY_SIZE:
@@ -173,7 +204,6 @@ while sup.step(timestep) != -1:
         dt, pred_pos = predict_intercept(block_position, smoothed_vel, CATCH_X)
         
         if dt is not None and pred_pos is not None:
-            # Try to compute joints for this intercept
             joints = compute_catch_joints(pred_pos, robot_pos, current_joints)
             
             if joints is not None:
@@ -189,39 +219,94 @@ while sup.step(timestep) != -1:
                 for j, motor in enumerate(motors):
                     motor.setPosition(float(intercept_joints[j]))
                 
-                # Open gripper wide
-                set_gripper_normalized(0.0)
+                # GRIPPER TIMING LOGIC
+                if not gripper_closing and not gripper_closed:
+                    should_close = False
+                    reason = ""
+                    
+                    # Auto-calculate optimal trigger distance
+                    if USE_AUTO_TIMING and dt is not None:
+                        # Calculate how long it takes to reach target closure
+                        timesteps_to_close = TARGET_GRIPPER_CLOSURE / GRIPPER_CLOSE_RATE
+                        time_to_close = timesteps_to_close * (timestep / 1000.0)  # convert to seconds
+                        
+                        # Calculate distance block travels in that time
+                        block_speed = np.linalg.norm(smoothed_vel)
+                        optimal_trigger_dist = block_speed * time_to_close
+                        
+                        if block_to_gripper_dist < optimal_trigger_dist:
+                            should_close = True
+                            reason = f"Auto-calculated (dist={block_to_gripper_dist:.3f}m, optimal={optimal_trigger_dist:.3f}m)"
+                    
+                    # Manual triggers
+                    if not should_close and (USE_DISTANCE_TRIGGER or USE_HYBRID_TRIGGER):
+                        if block_to_gripper_dist < GRIPPER_TRIGGER_DISTANCE:
+                            should_close = True
+                            reason = f"Distance trigger (dist={block_to_gripper_dist:.3f}m)"
+                    
+                    if (USE_TIME_TRIGGER or USE_HYBRID_TRIGGER) and not should_close:
+                        if dt < GRIPPER_TRIGGER_TIME:
+                            should_close = True
+                            reason = f"Time trigger (t={dt:.3f}s)"
+                    
+                    if should_close:
+                        print(f"[gripper] *** CLOSING *** - {reason}")
+                        gripper_closing = True
+                    else:
+                        set_gripper_normalized(0.0)  # Stay open
+                        # Debug output
+                        if tt % 10 == 0:
+                            print(f"[gripper] OPEN - dist={block_to_gripper_dist:.3f}m, time={dt:.3f}s")
+                
+                if gripper_closing and not gripper_closed:
+                    # Close the gripper
+                    set_gripper_normalized(1.0)
+                    
+                    # Debug every few frames - show actual gripper position
+                    if tt % 3 == 0:
+                        left_pos, right_pos = get_gripper_positions()
+                        avg_pos = (left_pos + right_pos) / 2 if left_pos is not None else 0.0
+                        print(f"[gripper] CLOSING... dist={block_to_gripper_dist:.3f}m, gripper_pos={avg_pos:.3f}")
+                    
+                    # Check if we've caught it
+                    if block_to_gripper_dist < GRIPPER_CATCH_DISTANCE:
+                        gripper_closed = True
+                        catch_success = True
+                        print(f"[gripper] ✓✓✓ CAUGHT ✓✓✓ Distance: {block_to_gripper_dist:.3f}m")
     
     elif not catching:
         # Default ready position
         for j, motor in enumerate(motors):
             motor.setPosition(READY_POSE[j])
-        set_gripper_normalized(0.0)  # Keep open
+        set_gripper_normalized(0.0)
+    
+    # Keep gripper closed if we caught it
+    if gripper_closed:
+        set_gripper_normalized(1.0)
     
     # Check if block passed catch plane
     if not PASSED and block_position[0] < CATCH_X:
         PASSED = True
-        print(f"[{tt}] Block crossed catch plane at: {block_position}")
+        print(f"\n{'='*60}")
+        print(f"[{tt}] Block crossed catch plane")
+        print(f"[{tt}] Gripper: closing={gripper_closing}, closed={gripper_closed}")
         
         if last_valid_prediction is not None:
-            # Calculate catch accuracy
             actual_pos_rel = block_position - robot_pos
             predicted_pos_rel = last_valid_prediction - robot_pos
             error = np.linalg.norm(actual_pos_rel - predicted_pos_rel)
             
             print(f"[catch] Prediction error: {error:.3f}m")
+            print(f"[catch] Final distance to gripper: {block_to_gripper_dist:.3f}m")
             
-            # Check if we actually caught it
-            end_effector_pos = fk(current_joints)[:3]
-            catch_distance = np.linalg.norm(actual_pos_rel - end_effector_pos)
-            
-            print(f"[catch] Distance to end effector: {catch_distance:.3f}m")
-            
-            if catch_distance < CATCH_MARGIN:
-                print("[catch] ✓ CAUGHT!")
+            if catch_success:
+                print("[catch] ✓✓✓ SUCCESSFULLY CAUGHT! ✓✓✓")
+            elif block_to_gripper_dist < CATCH_MARGIN:
+                print("[catch] ~ Close but timing was off")
             else:
                 print("[catch] ✗ Missed")
         else:
             print("[catch] No prediction was made")
+        print(f"{'='*60}\n")
     
     tt += 1
