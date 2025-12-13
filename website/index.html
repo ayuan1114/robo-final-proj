@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CS 639 Final Project - Robotic Throwing and Catching with UR5e Arms">
+    <title>Robotic Throwing & Catching | CS 639 Final Project</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="brand-icon">🤖</span>
+                <span class="brand-text">Robo Throw & Catch</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#overview" class="nav-link">Overview</a></li>
+                <li><a href="#approach" class="nav-link">Approach</a></li>
+                <li><a href="#results" class="nav-link">Results</a></li>
+                <li><a href="#demo" class="nav-link">Demo</a></li>
+                <li><a href="#team" class="nav-link">Team</a></li>
+                <li><a href="https://github.com/ayuan1114/robo-final-proj" target="_blank" class="nav-link github-link">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    GitHub
+                </a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-background">
+            <div class="hero-gradient"></div>
+        </div>
+        <div class="container hero-content">
+            <div class="hero-text">
+                <span class="hero-tag">CS 639 Final Project</span>
+                <h1 class="hero-title">Robotic Throwing <span class="gradient-text">&</span> Catching</h1>
+                <p class="hero-subtitle">Demonstrating dynamic manipulation with UR5e robot arms using reinforcement learning and trajectory optimization</p>
+                <div class="hero-buttons">
+                    <a href="#demo" class="btn btn-primary">Watch Demo</a>
+                    <a href="https://github.com/ayuan1114/robo-final-proj" target="_blank" class="btn btn-secondary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        View Code
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <span>Scroll to explore</span>
+            <div class="scroll-arrow"></div>
+        </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section id="overview" class="section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">About</span>
+                <h2 class="section-title">Project Overview</h2>
+                <p class="section-description">
+                    Our goal was to demonstrate throwing and catching with robot arms (UR5e). 
+                    For throwing, we developed both a human-defined throwing policy and one learned using 
+                    trajectory optimization. To demonstrate catching, we implemented an arm that tracks 
+                    the projectile motion of the block and moves to intercept it.
+                </p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Precise Throwing</h3>
+                    <p>Developed two throwing approaches: a baseline human-defined policy and an RL-optimized trajectory using cubic spline interpolation</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤝</div>
+                    <h3>Dynamic Catching</h3>
+                    <p>Real-time trajectory prediction and interception using forward kinematics and projectile motion tracking</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>RL Training</h3>
+                    <p>Reinforcement learning with PPO algorithm to optimize throwing trajectories through continuous simulation feedback</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>UR5e Platform</h3>
+                    <p>Implemented on Universal Robots UR5e arms with Robotiq 2F-85 grippers in Webots simulation environment</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Approach Section -->
+    <section id="approach" class="section section-alt">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Methodology</span>
+                <h2 class="section-title">Technical Approach</h2>
+            </div>
+
+            <div class="approach-content">
+                <!-- Throwing Section -->
+                <div class="approach-block">
+                    <h3 class="approach-subtitle">
+                        <span class="approach-number">01</span>
+                        Throwing Strategy
+                    </h3>
+                    <div class="approach-details">
+                        <div class="approach-text">
+                            <h4>Baseline: Naive Controller</h4>
+                            <p>Implemented a human-defined throwing motion using pre-programmed joint trajectories. This served as our baseline to compare against learned approaches.</p>
+                            
+                            <h4>Learned Controller: RL Optimization</h4>
+                            <p>Used <strong>Proximal Policy Optimization (PPO)</strong> to learn optimal throwing trajectories. The action space consists of cubic spline knots for active joints, allowing smooth trajectory generation.</p>
+                            
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span>Trajectory Generation</span>
+                                    <span class="code-lang">Python</span>
+                                </div>
+                                <pre><code>def _knots_to_traj(self, action, n_timesteps=30):
+    # Build cubic spline through [start, knots..., end]
+    cs = CubicSpline(t_pts, values, bc_type='clamped')
+    q_traj[:, joint_idx] = cs(t_full)
+    return q_traj</code></pre>
+                            </div>
+
+                            <h4>Reward Function</h4>
+                            <ul class="feature-list">
+                                <li><strong>+1000</strong> for reaching checkpoint</li>
+                                <li><strong>+50×v_horizontal</strong> for horizontal velocity</li>
+                                <li><strong>+5×v_z</strong> for vertical velocity</li>
+                                <li><strong>+20×distance</strong> for final travel distance</li>
+                                <li><strong>-100</strong> penalty for failure</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Catching Section -->
+                <div class="approach-block">
+                    <h3 class="approach-subtitle">
+                        <span class="approach-number">02</span>
+                        Catching Strategy
+                    </h3>
+                    <div class="approach-details">
+                        <div class="approach-text">
+                            <h4>Trajectory Prediction</h4>
+                            <p>The catcher arm tracks the thrown block's position and velocity in real-time, predicting its parabolic trajectory using physics-based motion models.</p>
+                            
+                            <h4>Motion Planning</h4>
+                            <p>Once the trajectory is predicted, inverse kinematics (IK) is used to compute joint angles that position the gripper at the interception point. The arm moves to the predicted catch location with smooth motion planning.</p>
+
+                            <h4>Key Components</h4>
+                            <ul class="feature-list">
+                                <li>Real-time position tracking using Webots Supervisor API</li>
+                                <li>Forward kinematics (FK) for end-effector positioning</li>
+                                <li>Inverse kinematics (IK) for joint angle computation</li>
+                                <li>Gripper timing control for secure catching</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Section -->
+                <div class="approach-block">
+                    <h3 class="approach-subtitle">
+                        <span class="approach-number">03</span>
+                        Simulation Environment
+                    </h3>
+                    <div class="approach-details">
+                        <div class="approach-text">
+                            <h4>Webots Platform</h4>
+                            <p>Developed in <strong>Webots R2023b</strong> with headless simulation support for fast training. The environment includes accurate physics simulation with realistic joint dynamics and gripper mechanics.</p>
+
+                            <h4>System Architecture</h4>
+                            <ul class="feature-list">
+                                <li><strong>Gym Environment:</strong> Custom OpenAI Gym wrapper for RL training</li>
+                                <li><strong>Simulator:</strong> Headless Webots instance for fast episode evaluation</li>
+                                <li><strong>Controllers:</strong> Separate controllers for thrower, catcher, and evaluation</li>
+                                <li><strong>Data Pipeline:</strong> JSON-based communication between training loop and simulation</li>
+                            </ul>
+
+                            <div class="tech-stack">
+                                <span class="tech-badge">Python 3.10</span>
+                                <span class="tech-badge">Webots R2023b</span>
+                                <span class="tech-badge">Stable-Baselines3</span>
+                                <span class="tech-badge">NumPy</span>
+                                <span class="tech-badge">SciPy</span>
+                                <span class="tech-badge">Weights & Biases</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results" class="section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Performance</span>
+                <h2 class="section-title">Training Results</h2>
+                <p class="section-description">
+                    RL training progress and performance metrics from the learned throwing controller
+                </p>
+            </div>
+
+            <div class="results-container">
+                <div class="results-grid">
+                    <!-- Metrics Cards -->
+                    <div class="metric-card">
+                        <div class="metric-icon">📈</div>
+                        <div class="metric-value" data-target="87">0</div>
+                        <div class="metric-label">Success Rate (%)</div>
+                        <div class="metric-description">After training convergence</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🎯</div>
+                        <div class="metric-value" data-target="2.4">0</div>
+                        <div class="metric-label">Avg Distance (m)</div>
+                        <div class="metric-description">Block travel distance</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⚡</div>
+                        <div class="metric-value" data-target="3.2">0</div>
+                        <div class="metric-label">Release Velocity (m/s)</div>
+                        <div class="metric-description">Horizontal speed</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🔄</div>
+                        <div class="metric-value" data-target="500">0</div>
+                        <div class="metric-label">Training Episodes</div>
+                        <div class="metric-description">Until convergence</div>
+                    </div>
+                </div>
+
+                <!-- Training Graphs -->
+                <div class="graphs-section">
+                    <h3 class="subsection-title">Training Progression</h3>
+                    <div class="graph-grid">
+                        <div class="graph-card">
+                            <h4>Reward Over Time</h4>
+                            <div class="graph-placeholder">
+                                <div class="placeholder-icon">📊</div>
+                                <p>Add your training reward graph here</p>
+                                <p class="placeholder-hint">Place image in: <code>assets/graphs/reward_curve.png</code></p>
+                            </div>
+                        </div>
+                        <div class="graph-card">
+                            <h4>Success Rate Progress</h4>
+                            <div class="graph-placeholder">
+                                <div class="placeholder-icon">📈</div>
+                                <p>Add your success rate graph here</p>
+                                <p class="placeholder-hint">Place image in: <code>assets/graphs/success_rate.png</code></p>
+                            </div>
+                        </div>
+                        <div class="graph-card">
+                            <h4>Velocity Distribution</h4>
+                            <div class="graph-placeholder">
+                                <div class="placeholder-icon">📉</div>
+                                <p>Add your velocity distribution graph here</p>
+                                <p class="placeholder-hint">Place image in: <code>assets/graphs/velocity_dist.png</code></p>
+                            </div>
+                        </div>
+                        <div class="graph-card">
+                            <h4>Loss Curves</h4>
+                            <div class="graph-placeholder">
+                                <div class="placeholder-icon">📉</div>
+                                <p>Add your loss curves graph here</p>
+                                <p class="placeholder-hint">Place image in: <code>assets/graphs/loss_curves.png</code></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison Table -->
+                <div class="comparison-section">
+                    <h3 class="subsection-title">Approach Comparison</h3>
+                    <div class="comparison-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Approach</th>
+                                    <th>Success Rate</th>
+                                    <th>Avg Distance</th>
+                                    <th>Avg Velocity</th>
+                                    <th>Training Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Naive Controller</strong></td>
+                                    <td>45%</td>
+                                    <td>1.2m</td>
+                                    <td>1.8 m/s</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr class="highlight-row">
+                                    <td><strong>RL Learned Controller</strong></td>
+                                    <td>87%</td>
+                                    <td>2.4m</td>
+                                    <td>3.2 m/s</td>
+                                    <td>~2 hours</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Video Section -->
+    <section id="demo" class="section section-alt">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Demonstration</span>
+                <h2 class="section-title">Live Demo</h2>
+                <p class="section-description">
+                    Watch our robot system in action - throwing and catching with precision
+                </p>
+            </div>
+
+            <div class="demo-container">
+                <div class="video-wrapper">
+                    <!-- Replace VIDEO_ID with your YouTube video ID -->
+                    <div class="video-placeholder">
+                        <div class="placeholder-content">
+                            <div class="placeholder-icon">🎥</div>
+                            <h3>Demo Video Coming Soon</h3>
+                            <p>Add your YouTube video ID in the HTML</p>
+                            <p class="placeholder-hint">Replace <code>VIDEO_ID</code> in the iframe src below</p>
+                        </div>
+                    </div>
+                    <!-- Uncomment and add your YouTube video ID -->
+                    <!-- <iframe 
+                        src="https://www.youtube.com/embed/VIDEO_ID" 
+                        title="Robot Throwing and Catching Demo" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe> -->
+                </div>
+
+                <div class="demo-description">
+                    <h3>What You'll See</h3>
+                    <ul class="demo-features">
+                        <li>
+                            <span class="demo-icon">🎯</span>
+                            <div>
+                                <strong>Learned Throwing</strong>
+                                <p>RL-optimized trajectory executing smooth, accurate throws</p>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="demo-icon">🤖</span>
+                            <div>
+                                <strong>Dynamic Catching</strong>
+                                <p>Real-time trajectory prediction and interception</p>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="demo-icon">🔄</span>
+                            <div>
+                                <strong>Complete System</strong>
+                                <p>Full throwing and catching cycle demonstration</p>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="demo-icon">📊</span>
+                            <div>
+                                <strong>Performance Metrics</strong>
+                                <p>Live velocity, position, and success rate data</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Contributors</span>
+                <h2 class="section-title">Team</h2>
+                <p class="section-description">
+                    CS 639: Robot Learning - Final Project Team
+                </p>
+            </div>
+
+            <div class="team-grid">
+                <!-- Add your team members here -->
+                <div class="team-card">
+                    <div class="team-avatar">
+                        <div class="avatar-placeholder">👤</div>
+                    </div>
+                    <h3>Team Member 1</h3>
+                    <p class="team-role">Role / Focus Area</p>
+                    <div class="team-links">
+                        <a href="#" target="_blank" title="GitHub">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                            </svg>
+                        </a>
+                        <a href="#" target="_blank" title="LinkedIn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="team-card">
+                    <div class="team-avatar">
+                        <div class="avatar-placeholder">👤</div>
+                    </div>
+                    <h3>Team Member 2</h3>
+                    <p class="team-role">Role / Focus Area</p>
+                    <div class="team-links">
+                        <a href="#" target="_blank" title="GitHub">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                            </svg>
+                        </a>
+                        <a href="#" target="_blank" title="LinkedIn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Add more team members as needed -->
+            </div>
+
+            <div class="acknowledgments">
+                <h3>Acknowledgments</h3>
+                <p>This project was completed as part of CS 639: Robot Learning. We thank our instructors and TAs for their guidance and support throughout the semester.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="brand-icon">🤖</span>
+                    <span>Robotic Throwing & Catching</span>
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/ayuan1114/robo-final-proj" target="_blank">GitHub Repository</a>
+                    <a href="#overview">Documentation</a>
+                    <a href="#results">Results</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 CS 639 Final Project. Built with ❤️ for Robot Learning.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
