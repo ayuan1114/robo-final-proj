@@ -59,6 +59,12 @@ class WebotsThrowEnv(gym.Env):
         # Webots simulator instance
         self.sim = WebotsSimulator(self.world_file, headless=not show_gui, run_name=run_name)
 
+    def seed(self, seed=None):
+        import random
+        import numpy as np
+        random.seed(seed)
+        np.random.seed(seed)
+
     def reset(self):
         # New episode begins — increment episode counter and return initial obs
         self.episode_counter += 1

@@ -283,7 +283,7 @@ while True:
 
     print(f"[EVAL] Results: success={result['success']}, velocity={release_velocity[:3]}, displacement={block_land_pos}m")
 
-    if runs >= 10:
+    if runs >= 100:
         sup.simulationQuit(0)
 
     print("[SIM] Resetting simulation for next evaluation run")
