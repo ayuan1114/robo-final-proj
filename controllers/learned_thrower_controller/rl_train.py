@@ -62,6 +62,7 @@ def main():
     parser.add_argument('--run-name', type=str, default='rl_run')
     parser.add_argument('--timesteps', type=int, default=1000)
     parser.add_argument('--n-knots', dest='n_knots', type=int, default=2)
+    parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--gui', action='store_true')
     args = parser.parse_args()
 
@@ -71,9 +72,12 @@ def main():
 
     env = DummyVecEnv([lambda: make_env(args)] * n_envs)
 
+    env.seed(args.seed)
+    env.action_space.seed(args.seed)
+
     # Use sensible defaults: PPO requires n_steps * n_envs >= batch_size.
     # Webots episodes are slow, so keep batch sizes modest but n_steps > 1.
-    model = PPO('MlpPolicy', env, verbose=1, n_steps=2, batch_size=2)
+    model = PPO('MlpPolicy', env, verbose=1, n_steps=2, batch_size=2, seed=args.seed)
 
     print("Starting training — this will be slow because each episode runs Webots.")
 

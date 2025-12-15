@@ -1,5 +1,6 @@
 __pycache__/
 .venv/
+.DS_Store
 
 *.wbproj
 
@@ -14,3 +15,7 @@ wandb/
 **/rl_outputs/*
 !**/rl_outputs/best_traj-example.json
 .env
+
+*.sh
+*.ps1
+
