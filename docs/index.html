@@ -31,6 +31,7 @@
                 <li><a href="#approach" class="nav-link">Approach</a></li>
                 <li><a href="#results" class="nav-link">Results</a></li>
                 <li><a href="#demo" class="nav-link">Demo</a></li>
+                <li><a href="#reflection" class="nav-link">Reflection</a></li>
                 <li><a href="#team" class="nav-link">Team</a></li>
                 <li><a href="https://github.com/ayuan1114/robo-final-proj" target="_blank" class="nav-link github-link">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -80,14 +81,49 @@
             <div class="section-header">
                 <span class="section-tag">About</span>
                 <h2 class="section-title">Project Overview</h2>
-                <p class="section-description">
-                    Our goal was to demonstrate throwing and catching with robot arms (UR5e). 
-                    For throwing, we developed both a human-defined throwing policy and one learned using 
-                    trajectory optimization. To demonstrate catching, we implemented an arm that tracks 
-                    the projectile motion of the block and moves to intercept it.
-                </p>
+                
+                <!-- Abstract Paragraph -->
+                <div class="abstract-box">
+                    <h3 class="abstract-title">Abstract</h3>
+                    <p class="abstract-text">
+                        This project demonstrates dynamic manipulation through robotic throwing and catching using two UR5e arms 
+                        with Robotiq 2F-85 grippers in the WeBots simulation environment. The project evolved into exploring the 
+                        interplay pseudo RL and naive throwing similar to human ball-throwing dynamics. We developed two throwing 
+                        strategies: a baseline human-defined controller using linear interpolation, and a learned controller optimized 
+                        through Proximal Policy Optimization (PPO) with cubic spline trajectory generation. 
+                        The learned controller significantly outperformed the baseline, achieving release velocities up to 3.87 m/s 
+                        and horizontal distances of 1.77m compared to the baseline's 1.79 m/s and 1.57m. 
+                        For catching, we implemented an adaptive interception system that performs real-time trajectory 
+                        prediction using physics-based projectile motion modeling and inverse kinematics. 
+                        The catcher successfully intercepts thrown blocks by dynamically computing catch planes and gripper timing 
+                        based on block velocity and position. Through systematic experimentation with trajectory complexity 
+                        (2-6 knots) and multiple random seeds, we demonstrated that simpler trajectories (2 knots) achieved the
+                        best throwing performance, while more complex trajectories (6 knots) showed higher success rates, revealing
+                        interesting trade-offs between trajectory expressiveness and learning stability in robot manipulation tasks.
+                    </p>
+                </div>
+    
+                <!-- Context -->
+                <div class="context-section">
+                    <h3 class="context-title">Project Context & Motivation</h3>
+                    <p class="context-text">
+                        Our original motivation for this project stemmed from the mechanics and idea behind various sport motions.
+                        Think basketball shot blocking, dart throwing, baseball pitching and catching. These motions are so unique to humans
+                        and require a lot of skill to master. We wanted to explore how robots could learn to perform similar dynamic manipulation 
+                        tasks.
+                        However, dynamic manipulation tasks like throwing and catching remain challenging problems in robotics, 
+                        requiring precise control, accurate prediction, and real-time adaptation. Unlike quasi-static manipulation 
+                        where objects move slowly and contact is maintained, dynamic manipulation involves ballistic phases where 
+                        the robotic system must reason about projectile physics and timing. This project was motivated by the 
+                        observation that humans are natural at such tasks through learned motor skills. Ultimately, suggesting that 
+                        reinforcement learning could similarly enable robots to discover effective throwing strategies or other 
+                        human-like motions. Our work demonstrates how combining learning-based trajectory optimization with 
+                        physics-based prediction can achieve robust dynamic manipulation and human-like motions.
+                        In the future, we see potential applications in manufacturing, sports robotics, and any human-robot interaction.
+                    </p>
+                </div>
             </div>
-
+    
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">🎯</div>
@@ -103,11 +139,6 @@
                     <div class="feature-icon">🧠</div>
                     <h3>RL Training</h3>
                     <p>Reinforcement learning with PPO algorithm to optimize throwing trajectories through continuous simulation feedback</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">⚙️</div>
-                    <h3>UR5e Platform</h3>
-                    <p>Implemented on Universal Robots UR5e arms with Robotiq 2F-85 grippers in Webots simulation environment</p>
                 </div>
             </div>
         </div>
@@ -526,6 +557,87 @@ def _knots_to_traj(self, action, n_timesteps=30):
         </div>
     </section>
 
+    <!-- Future Scope -->
+    <section id="reflection" class="section section-alt">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Looking Forward</span>
+                <h2 class="section-title">Reflection & Future Scope</h2>
+            </div>
+    
+            <div class="reflection-content">
+                <!-- Key Learnings -->
+                <div class="reflection-block">
+                    <h3 class="reflection-subtitle">
+                        Key Reflections
+                    </h3>
+                    <div class="reflection-text">
+                        <p>
+                            Through this project, we discovered several important insights about learning dynamic manipulation tasks. First, <strong>trajectory complexity doesn't always improve performance</strong> - our 2-knot controller achieved the best throwing distance and velocity, suggesting that simpler action spaces can be easier to optimize. However, the 6-knot controller showed better success rates, indicating a trade-off between peak performance and consistency.
+                        </p>
+                        <p>
+                            We also learned that <strong>reward function design is critical</strong>. Our velocity-weighted reward successfully encouraged the RL agent to discover "physics hacking" behaviors - aggressive joint movements that maximized release velocity beyond what human-intuitive motions would produce. The adaptive catching system highlighted the importance of <strong>robustness to variation</strong>: by dynamically computing catch planes based on observed trajectories rather than fixed positions, the catcher could handle both naive and learned throws effectively.
+                        </p>
+                        <p>
+                            Finally, <strong>simulation-reality gap considerations</strong> became apparent. While our learned policies work well in simulation, the aggressive motions and precise timing would probably face challenges on real hardware due to joint limits, motor dynamics, and sensor noise. 
+                        </p>
+                    </div>
+                </div>
+    
+                <!-- Challenges Overcome -->
+                <div class="reflection-block">
+                    <h3 class="reflection-subtitle">
+                        Challenges
+                    </h3>
+                    <div class="reflection-text">
+                        <ul class="challenge-list">
+                            <li>
+                                <strong>Gripper Timing Synching:</strong> Initially, we used fixed timing for gripper release, 
+                                leading to inconsistent catches especially in the learned throw. 
+                                To fix this, we dynamically computed every timestep using the block's smoothed velocity, predicted intercept time, 
+                                and the distance to the end effector. With this, once the block is close enough to the gripper, it closes.
+                            </li>
+                            <li>
+                                <strong>Aaron Challenge:</strong> 
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+    
+                <!-- Future Directions -->
+                <div class="reflection-block">
+                    <h3 class="reflection-subtitle">
+                        Future Work & Extensions
+                    </h3>
+                    <div class="reflection-text">
+                        <h4>Short-term Improvements</h4>
+                        <ul class="future-list">
+                            <li>
+                                <strong>Enhanced Catching Strategies:</strong> Instead of just blocking, implement true catching where the gripper moves with the block to absorb impact, reducing forces and improving reliability. This would require modeling gripper-block contact dynamics.
+                            </li>
+                            <li>
+                                <strong>Visual Perception:</strong> Replace perfect state information from simulation with camera-based tracking. Use computer vision (e.g., YOLO for detection, Kalman filtering for prediction) to estimate block pose and velocity in real-time.
+                            </li>
+                        </ul>
+    
+                        <h4>Long-term Directions</h4>
+                        <ul class="future-list">
+                            <li>
+                                <strong>Variable Object Properties:</strong> Generalize to objects with different masses, shapes, and aerodynamic properties. This would require learning object-specific throwing strategies or meta-learning approaches.
+                            </li>
+                            <li>
+                                <strong>Clutter and Obstacles:</strong> Add environmental complexity with obstacles between thrower and catcher, requiring trajectory planning that considers occlusion and collision avoidance.
+                            </li>
+                            <li>
+                                <strong>Human Thrower + Robot Arm:</strong> Instead of two robot arms, have a human throw the object and the robot "catch" it. This would involve learning to predict human throwing styles and adapting catching strategies accordingly.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Team Section -->
     <section id="team" class="section">
         <div class="container">
@@ -541,16 +653,11 @@ def _knots_to_traj(self, action, n_timesteps=30):
                 <!-- Add your team members here -->
                 <div class="team-card">
                     <div class="team-avatar">
-                        <div class="avatar-placeholder">👤</div>
+                        <img src="assets/aaron_headshot.jpeg" alt="Aaron Yuan" class="avatar-img" />
                     </div>
                     <h3>Aaron Yuan</h3>
                     <div class="team-links">
-                        <a href="#" target="_blank" title="GitHub">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                            </svg>
-                        </a>
-                        <a href="#" target="_blank" title="LinkedIn">
+                        <a href="https://www.linkedin.com/in/aaronyuan03/" target="_blank" title="LinkedIn">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
                             </svg>
@@ -560,16 +667,11 @@ def _knots_to_traj(self, action, n_timesteps=30):
 
                 <div class="team-card">
                     <div class="team-avatar">
-                        <div class="avatar-placeholder">👤</div>
+                        <img src="assets/felix_headshot.jpeg" alt="Felix Zhu" class="avatar-img" />
                     </div>
                     <h3>Felix Zhu</h3>
                     <div class="team-links">
-                        <a href="#" target="_blank" title="GitHub">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                            </svg>
-                        </a>
-                        <a href="#" target="_blank" title="LinkedIn">
+                        <a href="https://www.linkedin.com/in/felixzhu0" target="_blank" title="LinkedIn">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
                             </svg>
@@ -607,123 +709,5 @@ def _knots_to_traj(self, action, n_timesteps=30):
 
     <script src="js/script.js"></script>
 </body>
-<style>
-    /* Demo video section styles */
-    .demo-container {
-        display: flex;
-        flex-direction: column;
-        gap: 3rem;
-        margin-bottom: 4rem;
-    }
-    
-    .demo-video-section {
-        width: 100%;
-    }
-    
-    .demo-video-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        color: #1a1a1a;
-    }
-    
-    .video-wrapper {
-        position: relative;
-        width: 100%;
-        padding-bottom: 56.25%; /* 16:9 aspect ratio */
-        height: 0;
-        overflow: hidden;
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    }
-    
-    .video-wrapper iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border-radius: 12px;
-    }
-    
-    .demo-video-description {
-        margin-top: 1rem;
-        font-size: 0.95rem;
-        color: #666;
-        text-align: center;
-    }
-    
-    .demo-description {
-        background: white;
-        padding: 2.5rem;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    }
-    
-    .demo-description h3 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        color: #1a1a1a;
-    }
-    
-    .demo-features {
-        list-style: none;
-        padding: 0;
-        display: grid;
-        gap: 1.5rem;
-    }
-    
-    .demo-features li {
-        display: flex;
-        gap: 1rem;
-        align-items: start;
-    }
-    
-    .demo-icon {
-        font-size: 1.5rem;
-        flex-shrink: 0;
-    }
-    
-    .demo-features strong {
-        display: block;
-        font-size: 1.1rem;
-        margin-bottom: 0.25rem;
-        color: #1a1a1a;
-    }
-    
-    .demo-features p {
-        margin: 0;
-        color: #666;
-        font-size: 0.95rem;
-    }
-    
-    /* Responsive design */
-    @media (min-width: 768px) {
-        .demo-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 4rem;
-        }
-        
-        .demo-description {
-            grid-column: 1 / -1;
-        }
-    }
-    
-    @media (max-width: 767px) {
-        .demo-video-title {
-            font-size: 1.25rem;
-        }
-        
-        .demo-description {
-            padding: 1.5rem;
-        }
-        
-        .demo-features {
-            gap: 1rem;
-        }
-    }
-    </style>
 </html>
+

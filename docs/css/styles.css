@@ -1037,3 +1037,348 @@ a:hover {
         font-size: 2.5rem;
     }
 }
+
+.demo-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    margin-bottom: 4rem;
+}
+
+.demo-video-section {
+    width: 100%;
+}
+
+.demo-video-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.video-wrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+}
+
+.video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+}
+
+.demo-video-description {
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.demo-description {
+    background: var(--bg-card);
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+}
+
+.demo-description h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+.demo-features {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 1.5rem;
+}
+
+.demo-features li {
+    display: flex;
+    gap: 1rem;
+    align-items: start;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.demo-features li:last-child {
+    border-bottom: none;
+}
+
+.demo-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.demo-features strong {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+    color: var(--text-primary);
+}
+
+.demo-features p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* ===========================
+   Abstract and Context Styling
+   =========================== */
+.abstract-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2.5rem;
+    border-radius: 16px;
+    margin: 2rem 0;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+}
+
+.abstract-title {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.abstract-text {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.05rem;
+    line-height: 1.8;
+    text-align: justify;
+    margin: 0;
+}
+
+.context-section {
+    background: var(--bg-card);
+    padding: 2rem;
+    border-radius: 12px;
+    margin-top: 2rem;
+    border-left: 4px solid #667eea;
+    border: 1px solid var(--border-color);
+}
+
+.context-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.context-text {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.7;
+    text-align: justify;
+    margin: 0;
+}
+
+/* ===========================
+   Reflection Section Styling
+   =========================== */
+.reflection-content {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+}
+
+.reflection-block {
+    background: var(--bg-card);
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+}
+
+.reflection-subtitle {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.reflection-icon {
+    font-size: 2rem;
+}
+
+.reflection-text {
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+.reflection-text p {
+    margin-bottom: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.reflection-text h4 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #667eea;
+}
+
+.challenge-list,
+.future-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.challenge-list li,
+.future-list li {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.challenge-list li:last-child,
+.future-list li:last-child {
+    border-bottom: none;
+}
+
+.challenge-list strong,
+.future-list strong {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.future-cta {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 3rem;
+    border-radius: 16px;
+    text-align: center;
+    margin-top: 3rem;
+    color: white;
+}
+
+.future-cta h3 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    color: white;
+}
+
+.future-cta p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+    color: white;
+}
+
+.future-cta .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    background: white;
+    color: #667eea;
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.future-cta .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* ===========================
+   Team Avatar Images
+   =========================== */
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.team-avatar {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid var(--primary);
+}
+
+/* ===========================
+   Responsive Design Updates
+   =========================== */
+@media (min-width: 768px) {
+    .demo-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 4rem;
+    }
+    
+    .demo-description {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 767px) {
+    .demo-video-title {
+        font-size: 1.25rem;
+    }
+    
+    .demo-description {
+        padding: 1.5rem;
+    }
+    
+    .demo-features {
+        gap: 1rem;
+    }
+    
+    .abstract-box,
+    .reflection-block {
+        padding: 1.5rem;
+    }
+    
+    .abstract-title,
+    .reflection-subtitle {
+        font-size: 1.3rem;
+    }
+    
+    .abstract-text,
+    .context-text,
+    .reflection-text {
+        font-size: 0.95rem;
+        text-align: left;
+    }
+    
+    .future-cta {
+        padding: 2rem 1.5rem;
+    }
+    
+    .future-cta h3 {
+        font-size: 1.5rem;
+    }
+}
