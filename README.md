@@ -17,3 +17,7 @@ webots worlds/final.wbt
 ```
 
 Or select `worlds/final.wbt` from Webots in File > Open World...
+
+### Thanks,
+
+#### Aaron Yuan, Felix Zhu
