@@ -12,10 +12,13 @@ eval_result.json
 ppo_rl_test.zip
 
 wandb/
-**/rl_outputs/*
-!**/rl_outputs/best_traj-example.json
+# **/rl_outputs/*
+# !**/rl_outputs/best_traj-example.json
+# (In .env file) EVAL_TRAJ=train-{n}knots
 .env
 data/
+
+naive_results.json
 
 *.sh
 *.ps1

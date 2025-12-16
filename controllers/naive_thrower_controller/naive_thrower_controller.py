@@ -3,6 +3,7 @@
 import sys
 import os
 import numpy as np
+import json
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
@@ -101,6 +102,8 @@ END_THROW_POSE = np.array([2.7, -1.22, 1, -3, -1.57, 3.14])
 THROW_TIME = 15  # timesteps over which to execute the throw
 MOVE_TIME = 50
 PAUSE_TIME = 50
+CHECKPOINT_X = -0.67
+TABLE_Z = 0.715
 
 start = None
 
@@ -144,6 +147,16 @@ last_pose = BASE_POSE
 
 thrower = Arm()
 
+# Tracking variables for statistics
+checkpoint_reached = False
+block_dropped = False
+release_velocity = None
+final_distance = 0.0
+block_pos_at_release = None
+landed = False
+block_land_pos = None
+pos_at_passing = None
+
 while sup.step(timestep) != -1:
 
     t = sup.getTime()    
@@ -154,13 +167,81 @@ while sup.step(timestep) != -1:
     
     set_gripper_normalized(cur_pose[-1])
 
+    # Get block position
+    block_pos = np.array(block.getPosition())
+    robot_pos = np.array(robot.getPosition())
+    block_rel_pos = block_pos - robot_pos
+    arm_pos = fk(last_pose[:6])[:3]
+
+    # Check if block released (similar to eval_thrower_controller)
+    if tt > 200 and not block_dropped:
+        block_gripper_dist = np.linalg.norm(block_rel_pos - arm_pos)
+        if block_gripper_dist > 0.08:
+            block_dropped = True
+            release_velocity = block.getVelocity()
+            block_pos_at_release = block_rel_pos.copy()
+            print(f"[NAIVE] Block released at t={tt}")
+
+    if tt > 150:
+        if not checkpoint_reached and block_pos[0] < CHECKPOINT_X:
+            checkpoint_reached = True
+            pos_at_passing = block_pos.copy()
+
+        # Check if block landed
+        if not landed and block_pos[2] < TABLE_Z:
+            landed = True
+            block_land_pos = block_rel_pos.copy()
+            print(f"[NAIVE] Block landed at t={tt}")
+
     if tt == 200:
         print('=' * 50 + 'THROWN' + '=' * 50)
 
     if tt % 50 == 0:
         print(f"[{tt}] Thrower Config: ", cur_pose)
-        print(f"[{tt}] Thrower End: ", fk(cur_pose)[:3])
-        print(f"[{tt}] Thrower Block Pos: ", np.array(block.getPosition()) - np.array(robot.getPosition()))
+        print(f"[{tt}] Thrower End: ", fk(cur_pose[:-1])[:3])
+        print(f"[{tt}] Thrower Block Pos: ", block_rel_pos)
 
     last_pose = cur_pose
     tt += 1
+
+    # Exit when block has landed
+    if landed:
+        break
+
+# Save statistics
+result_path = os.path.join(os.path.dirname(__file__), "naive_result.json")
+
+release_vel_hor = (
+    -float(np.linalg.norm(release_velocity[:2])) if release_velocity is not None and release_velocity[0] > 0
+    else float(np.linalg.norm(release_velocity[:2])) if release_velocity is not None
+    else 0.0
+)
+
+final_distance = (
+    -float(np.linalg.norm(block_land_pos[:2] - block_pos_at_release[:2])) if block_pos_at_release is not None and block_land_pos[0] < block_pos_at_release[0]
+    else float(np.linalg.norm(block_land_pos[:2] - block_pos_at_release[:2])) if block_land_pos is not None and block_pos_at_release is not None
+    else 0.0
+)
+
+result = {
+    'controller': 'naive_thrower',
+    'total_timesteps': tt,
+    'block_released': block_dropped,
+    'block_released_time': tt if block_dropped else None,
+    'release_velocity_z': float(release_velocity[2]) if release_velocity is not None else 0.0,
+    'release_velocity_hor': release_vel_hor,
+    'success': checkpoint_reached,
+    'final_distance': final_distance,
+    'position_at_checkpoint': pos_at_passing.tolist() if pos_at_passing is not None else None,
+    'position_at_release': block_pos_at_release.tolist() if block_pos_at_release is not None else None,
+    'final_arm_pos': arm_pos.tolist(),
+    'final_block_pos': block_rel_pos.tolist(),
+}
+
+with open(result_path, 'w') as f:
+    json.dump(result, f, indent=2)
+
+print(f"\n[NAIVE] Results saved to {result_path}")
+print(f"[NAIVE] Success: {result['success']}")
+print(f"[NAIVE] Release velocity (hor, z): ({release_vel_hor:.3f}, {result['release_velocity_z']:.3f}) m/s")
+print(f"[NAIVE] Final distance: {final_distance:.3f} m")

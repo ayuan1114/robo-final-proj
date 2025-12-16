@@ -9,6 +9,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        window.MathJax = {
+        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+        svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -124,30 +131,45 @@
                     <div class="approach-details">
                         <div class="approach-text">
                             <h4>Baseline: Naive Controller</h4>
-                            <p>Implemented a human-defined throwing motion using pre-programmed joint trajectories. This served as our baseline to compare against learned approaches.</p>
+                            <p>
+                                Implemented a human-defined throwing motion. 
+                                This was simply just specifying a starting pose and ending pose and then linearly interpolating joint angles between them to generate a throwing motion.
+                                Some work playing with the time between the start and end poses was done to achieve a satisfying throwing motion.
+                            </p>
                             
                             <h4>Learned Controller: RL Optimization</h4>
-                            <p>Used <strong>Proximal Policy Optimization (PPO)</strong> to learn optimal throwing trajectories. The action space consists of cubic spline knots for active joints, allowing smooth trajectory generation.</p>
+                            <p>
+                                Used <strong>Proximal Policy Optimization (PPO)</strong> to learn optimal throwing trajectories.
+                                Throwing is trained through a custom simulation-in-the-loop environment built in Webots.
+                                Our learned throwing policies iare defined by intermediate poses (knots) and the timestep during the throw that the block si released at.
+                                The RL agent's action space consists of modifications to the poses at each knot and the release timestep.
+                                We generate a trajectory using cubic spline interpolation through the start pose, knot poses, and end pose.
+                                We also determine the claw opening and closing times based on the release timestep.
+                                The success of the agent is determined by the reward function which we have defined below.
+                            </p>
                             
                             <div class="code-block">
                                 <div class="code-header">
                                     <span>Trajectory Generation</span>
-                                    <span class="code-lang">Python</span>
+                                    
                                 </div>
-                                <pre><code>def _knots_to_traj(self, action, n_timesteps=30):
+                                <pre><code>
+def _knots_to_traj(self, action, n_timesteps=30):
     # Build cubic spline through [start, knots..., end]
     cs = CubicSpline(t_pts, values, bc_type='clamped')
     q_traj[:, joint_idx] = cs(t_full)
-    return q_traj</code></pre>
+    return q_traj
+                                </code></pre>
                             </div>
 
                             <h4>Reward Function</h4>
+                            <p>$R(\mathbf{\theta}) = 50 v_{hor} + 5 v_z + 20 d_{final} + I(success)$</p>
                             <ul class="feature-list">
-                                <li><strong>+1000</strong> for reaching checkpoint</li>
-                                <li><strong>+50×v_horizontal</strong> for horizontal velocity</li>
-                                <li><strong>+5×v_z</strong> for vertical velocity</li>
-                                <li><strong>+20×distance</strong> for final travel distance</li>
-                                <li><strong>-100</strong> penalty for failure</li>
+                                <li>$\mathbf{\theta}$: defines the poses at each knots and the timestep within the trajectory to release the block</li>
+                                <li>$\mathbf{v_{hor}}$: horizontal velocity (magnitude in the xy plane) on release</li>
+                                <li>$\mathbf{v_z}$: vertical velocity (along z-axis) at release</li>
+                                <li>$\mathbf{d_{final}}$: horizontal displacement when the block passes through the table's plane ($z = 0.715$)</li>
+                                <li>$\mathbf{I(success)} = 1000$ if the projectile succesfully reaches the checkpoint ($x \leq -0.67$) before hitting the table's plane otherise $-100$</li>
                             </ul>
                         </div>
                     </div>
@@ -187,13 +209,23 @@
                     <div class="approach-details">
                         <div class="approach-text">
                             <h4>Webots Platform</h4>
-                            <p>Developed in <strong>Webots R2023b</strong> with headless simulation support for fast training. The environment includes accurate physics simulation with realistic joint dynamics and gripper mechanics.</p>
+                            <p>
+                                Developed in <strong>Webots R2023b</strong> with headless simulation to support fast training and GUI support for debugging.
+                                Webots provides accurate physics simulation with realistic joint dynamics and gripper mechanics.
+                                It also enables us to get real-time state feedback about robot states and block position and velocity.
+                            </p>
 
                             <h4>System Architecture</h4>
                             <ul class="feature-list">
-                                <li><strong>Gym Environment:</strong> Custom OpenAI Gym wrapper for RL training</li>
-                                <li><strong>Simulator:</strong> Headless Webots instance for fast episode evaluation</li>
-                                <li><strong>Controllers:</strong> Separate controllers for thrower, catcher, and evaluation</li>
+                                <li><strong>Gym Environment:</strong> Custom OpenAI Gym wrapper for RL training.</li>
+                                <li><strong>Simulator:</strong> Webots instance for trajectory evaluation, option for either fast headless mode or real-time GUI mode.</li>
+                                <li><strong>Controllers:</strong> Separate controllers for thrower, catcher, and evaluation.</li>
+                                    <ul>
+                                        <li><em>Naive Thrower Controller:</em> Executes predefined throwing trajectory.</li>
+                                        <li><em>Learned Thrower Controller:</em> Executes throwing trajectory based on a selected trajectory (set EVAL_TRAJ environment variable).</li>
+                                        <li><em>Catcher Controller:</em> Tracks block and computes interception trajectory.</li>
+                                        <li><em>Evaluator Controller:</em> Runs within an isolated Webots world that is used solely for training. Monitors block state during each episode and computes rewards.</li>
+                                    </ul>
                                 <li><strong>Data Pipeline:</strong> JSON-based communication between training loop and simulation</li>
                             </ul>
 
@@ -223,105 +255,188 @@
                 </p>
             </div>
 
-            <div class="results-container">
-                <div class="results-grid">
-                    <!-- Metrics Cards -->
-                    <div class="metric-card">
-                        <div class="metric-icon">📈</div>
-                        <div class="metric-value" data-target="87">0</div>
-                        <div class="metric-label">Success Rate (%)</div>
-                        <div class="metric-description">After training convergence</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-icon">🎯</div>
-                        <div class="metric-value" data-target="2.4">0</div>
-                        <div class="metric-label">Avg Distance (m)</div>
-                        <div class="metric-description">Block travel distance</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-icon">⚡</div>
-                        <div class="metric-value" data-target="3.2">0</div>
-                        <div class="metric-label">Release Velocity (m/s)</div>
-                        <div class="metric-description">Horizontal speed</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-icon">🔄</div>
-                        <div class="metric-value" data-target="500">0</div>
-                        <div class="metric-label">Training Episodes</div>
-                        <div class="metric-description">Until convergence</div>
+            <div class="approach-content">
+                <div class="approach-block">
+                    <h3 class="approach-subtitle">
+                        <span class="approach-number">01</span>
+                        Varying Knots Experiment
+                    </h3>
+                    <div class="approach-details">
+                        <p>
+                            We ran multiple training experiments with different numbers of knots (2, 3, 4, 6) to see how trajectory complexity affects training and final performance.
+                            More knots allow for more complex trajectories but also increase the action space dimensionality, making learning more challenging.
+                            We trained each agent using the same reward function (specified above) for 1000 steps and kept a reward seed of 42 for consistency.
+                            We wanted to see which number of knots provides the best trade-off between expressiveness and learnability.
+                        </p>
                     </div>
                 </div>
+            </div>
+
+            <div class="results-container">
 
                 <!-- Training Graphs -->
                 <div class="graphs-section">
                     <h3 class="subsection-title">Training Progression</h3>
                     <div class="graph-grid">
                         <div class="graph-card">
+                            <h4>Horizontal Velocity Over Time</h4>
+                            <div class="graph-wrapper">
+                                <img src="assets/graphs/knots_vel.png" alt="Velocity progress" class="graph-img" />
+                            </div>
+                        </div>
+                        <div class="graph-card">
+                            <h4>Distance Over Time</h4>
+                            <div class="graph-wrapper">
+                                <img src="assets/graphs/knots_dist.png" alt="Distance progress" class="graph-img" />
+                            </div>
+                        </div>
+                        <div class="graph-card">
                             <h4>Reward Over Time</h4>
-                            <div class="graph-placeholder">
-                                <div class="placeholder-icon">📊</div>
-                                <p>Add your training reward graph here</p>
-                                <p class="placeholder-hint">Place image in: <code>assets/graphs/reward_curve.png</code></p>
+                            <div class="graph-wrapper">
+                                <img src="assets/graphs/knots_reward.png" alt="Reward progress" class="graph-img" />
                             </div>
                         </div>
                         <div class="graph-card">
                             <h4>Success Rate Progress</h4>
-                            <div class="graph-placeholder">
-                                <div class="placeholder-icon">📈</div>
-                                <p>Add your success rate graph here</p>
-                                <p class="placeholder-hint">Place image in: <code>assets/graphs/success_rate.png</code></p>
-                            </div>
-                        </div>
-                        <div class="graph-card">
-                            <h4>Velocity Distribution</h4>
-                            <div class="graph-placeholder">
-                                <div class="placeholder-icon">📉</div>
-                                <p>Add your velocity distribution graph here</p>
-                                <p class="placeholder-hint">Place image in: <code>assets/graphs/velocity_dist.png</code></p>
-                            </div>
-                        </div>
-                        <div class="graph-card">
-                            <h4>Loss Curves</h4>
-                            <div class="graph-placeholder">
-                                <div class="placeholder-icon">📉</div>
-                                <p>Add your loss curves graph here</p>
-                                <p class="placeholder-hint">Place image in: <code>assets/graphs/loss_curves.png</code></p>
+                            <div class="graph-wrapper">
+                                <img src="assets/graphs/knots_success.png" alt="Success rate progress" class="graph-img" />
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <h3 class="subsection-title">Average Performance Across Knots</h3>
+                <div class="results-grid">
+                    <!-- Metrics Cards -->
+                    <div class="metric-card">
+                        <div class="metric-icon">🔄</div>
+                        <div class="metric-value" data-target="1000">0</div>
+                        <div class="metric-label">Training Episodes</div>
+                        <div class="metric-description">Until convergence</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⚡</div>
+                        <div class="metric-value" data-target="3.60">0</div>
+                        <div class="metric-label">Release Velocity (m/s)</div>
+                        <div class="metric-description">Horizontal speed</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🎯</div>
+                        <div class="metric-value" data-target="1.02">0</div>
+                        <div class="metric-label">Avg Distance (m)</div>
+                        <div class="metric-description">Block travel distance</div>
+                    </div>
+                </div>
+
                 <!-- Comparison Table -->
                 <div class="comparison-section">
-                    <h3 class="subsection-title">Approach Comparison</h3>
+                    <h3 class="subsection-title">Knots Comparison</h3>
                     <div class="comparison-table">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Approach</th>
-                                    <th>Success Rate</th>
-                                    <th>Avg Distance</th>
-                                    <th>Avg Velocity</th>
-                                    <th>Training Time</th>
+                                    <th>Number of Knots</th>
+                                    <th>Final Success Rate</th>
+                                    <th>Best Policy Distance</th>
+                                    <th>Best Policy Velocity</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td><strong>Naive Controller</strong></td>
-                                    <td>45%</td>
-                                    <td>1.2m</td>
-                                    <td>1.8 m/s</td>
+                                    <td><strong>Naive</strong></td>
                                     <td>-</td>
+                                    <td>1.57m</td>
+                                    <td>1.79 m/s</td>
                                 </tr>
-                                <tr class="highlight-row">
-                                    <td><strong>RL Learned Controller</strong></td>
-                                    <td>87%</td>
-                                    <td>2.4m</td>
-                                    <td>3.2 m/s</td>
-                                    <td>~2 hours</td>
+                                <tr>
+                                    <td><strong>2</strong></td>
+                                    <td>42.2%</td>
+                                    <td>1.77m</td>
+                                    <td>3.87 m/s</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>3</strong></td>
+                                    <td>23.2%</td>
+                                    <td>1.65m</td>
+                                    <td>3.81 m/s</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>4</strong></td>
+                                    <td>46.2%</td>
+                                    <td>1.65m</td>
+                                    <td>3.80 m/s</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>6</strong></td>
+                                    <td>59.0%</td>
+                                    <td>1.62m</td>
+                                    <td>2.93 m/s</td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+                <div class="comparison-section">
+                    <h3 class="subsection-title">Experiment Results</h3>
+                    <div class="approach-text">
+                        <h4>Learned vs. Naive</h4>
+                        <p>
+                            First off, we can see that all learned controllers were able to achieve a better release velocity and distance compared to the naive controller.
+                            This significant different in velocity is likely because of the relatively strong weight for velocity in our reward function and some physics hacking discovered throw learning.
+                        </p>
+                        <h4>How did knots affect performance</h4>
+                        <p>
+                            Among the learned controllers, we can see that the 6-knots controller was able to achieve the best success rate throughout the training and seems to perform well when looking at the graphs.
+                            However, we can see that the 2-knots controller was actually able to achieve the best throwing policy with the best distance and velocity across the board.
+                            The overall results of this experiment also seem to show that throwing policy performance does not scale with the number of knots used.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="approach-block" style="margin-top: 80px;">
+                    <h3 class="approach-subtitle">
+                        <span class="approach-number">02</span>
+                        Training Performance Across Seeds
+                    </h3>
+                    <div class="approach-details">
+                        <p>
+                            After determining that the 2-knot trajectories worked best for simply getting a good throwing policy, we ran another experiment to see how training performance varied across different random seeds.\
+                            We ran 4 random seeds (42, 246813579, 3812978465, 1732584193)
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-container">
+
+                <!-- Training Graphs -->
+                <div class="graphs-section">
+                    <h3 class="subsection-title">Training Progression</h3>
+                    <div class="graph-grid">
+                        <div class="graph-card">
+                            <h4>Horizontal Velocity Over Time</h4>
+                            <div class="graph-wrapper">
+                                <img src="assets/graphs/seeds_vel.png" alt="Velocity progress" class="graph-img" />
+                            </div>
+                        </div>
+                        <div class="graph-card">
+                            <h4>Distance Over Time</h4>
+                            <div class="graph-wrapper">
+                                <img src="assets/graphs/seeds_dist.png" alt="Distance progress" class="graph-img" />
+                            </div>
+                        </div>
+                        <div class="graph-card">
+                            <h4>Reward Over Time</h4>
+                            <div class="graph-wrapper">
+                                <img src="assets/graphs/seeds_reward.png" alt="Reward progress" class="graph-img" />
+                            </div>
+                        </div>
+                        <div class="graph-card">
+                            <h4>Success Rate Progress</h4>
+                            <div class="graph-wrapper">
+                                <img src="assets/graphs/seeds_success.png" alt="Success rate progress" class="graph-img" />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
