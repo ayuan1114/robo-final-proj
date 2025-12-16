@@ -119,6 +119,10 @@ flight_start_pos = None
 # adaptive catch plane
 determined_catch_x = None
 
+# TEXT DISPLAY variables 
+label_display_time = 0
+label_duration = 150  # timesteps to show label
+
 # default ready pose
 READY_POSE = [-0.343, -1.2, 1.5, -2.0, -1.57, 1.03]
 
@@ -269,7 +273,7 @@ while sup.step(timestep) != -1:
                 intercept_joints = joints
                 last_valid_prediction = pred_pos
                 
-                # Move to intercept position
+                # move to intercept position
                 for j, motor in enumerate(motors):
                     motor.setPosition(float(intercept_joints[j]))
                 
@@ -319,6 +323,10 @@ while sup.step(timestep) != -1:
                         catch_success = True
                         print(f"[gripper] --- CAUGHT --- Distance: {block_to_gripper_dist:.3f}m")
                         print(f"[gripper] Holding position - no longer tracking block")
+                        
+                        # display text in 3D environment (NOT CONSOLE)
+                        sup.setLabel(0, "BLOCKED BY JAMES!", 0.5, 0.1, 0.15, 0x00FF00, 0.0, "Arial")
+                        label_display_time = tt
     
     elif not catching and not catch_success:
         # default ready position (only if we haven't caught yet)
@@ -336,6 +344,11 @@ while sup.step(timestep) != -1:
     if gripper_closed:
         set_gripper_normalized(1.0)
     
+    # clear text after time duration
+    if label_display_time > 0 and tt - label_display_time > label_duration:
+        sup.setLabel(0, "", 0, 0, 0, 0x000000, 0.0, "Arial")
+        label_display_time = 0
+    
     # check if block passed catch plane
     if not PASSED and block_position[0] < catch_x:
         PASSED = True
@@ -352,9 +365,9 @@ while sup.step(timestep) != -1:
             print(f"[catch] Final distance to gripper: {block_to_gripper_dist:.3f}m")
             
             if catch_success:
-                print("[catch] SUCCESSFULLY CAUGHT!")
+                print("[catch] CAUGHT!")
             elif block_to_gripper_dist < CATCH_MARGIN:
-                print("[catch] Close but timing was off")
+                print("[catch] Close, timing was off")
             else:
                 print("[catch] Missed")
         else:
