@@ -1,0 +1,11 @@
+{
+  "name": "robo-docs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local dev start script for the project docs folder",
+  "scripts": {
+    "start": "powershell -NoProfile -ExecutionPolicy Bypass -File ./serve.ps1"
+  },
+  "author": "",
+  "license": "MIT"
+}

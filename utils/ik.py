@@ -3,9 +3,8 @@ from scipy.spatial.transform import Rotation as R
 from .kinematic_helpers import *
 
 accept_threshold = 0.0005
-match_angle = True
 
-def getDesiredRobotCommand(tt, desired_pose, current_q):
+def getDesiredRobotCommand(tt, desired_pose, current_q, match_angle=True):
     current_q = np.asarray(current_q, dtype=float)
     desired_pose = np.asarray(desired_pose, dtype=float)
 

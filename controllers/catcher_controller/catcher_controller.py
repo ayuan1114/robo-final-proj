@@ -80,6 +80,7 @@ def get_joint_positions():
     return np.array([m.getPositionSensor().getValue() for m in motors])
 
 # ADAPTIVE PARAMETERS
+MATCH_POSE = False
 
 # Dynamically determine catch plane based on block trajectory
 ADAPTIVE_CATCH_PLANE = True
@@ -200,7 +201,7 @@ def compute_catch_joints(target_pos, robot_pos, current_joints):
     try:
         rel_pos = target_pos - robot_pos
         rel_pose = np.concatenate((rel_pos, [0, 0, 0]))
-        joints = getDesiredRobotCommand(0, rel_pose, current_joints)
+        joints = getDesiredRobotCommand(0, rel_pose, current_joints, match_angle=MATCH_POSE)
         
         if len(joints) == 6:
             if np.all(np.abs(joints) < 2 * np.pi):
@@ -317,7 +318,7 @@ while sup.step(timestep) != -1:
                     if block_to_gripper_dist < GRIPPER_CATCH_DISTANCE:
                         gripper_closed = True
                         catch_success = True
-                        print(f"[gripper] --- CAUGHT --- Distance: {block_to_gripper_dist:.3f}m")
+                        print(f"[gripper] --- BLOCKED --- Distance: {block_to_gripper_dist:.3f}m")
                         print(f"[gripper] Holding position - no longer tracking block")
     
     elif not catching and not catch_success:
@@ -352,7 +353,7 @@ while sup.step(timestep) != -1:
             print(f"[catch] Final distance to gripper: {block_to_gripper_dist:.3f}m")
             
             if catch_success:
-                print("[catch] SUCCESSFULLY CAUGHT!")
+                print("[catch] SUCCESSFULLy BLOCKED!")
             elif block_to_gripper_dist < CATCH_MARGIN:
                 print("[catch] Close but timing was off")
             else:
