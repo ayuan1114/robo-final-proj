@@ -55,7 +55,7 @@
         <div class="container hero-content">
             <div class="hero-text">
                 <span class="hero-tag">CS 639 Final Project</span>
-                <h1 class="hero-title">Robotic Throwing <span class="gradient-text">&</span> Catching</h1>
+                <h1 class="hero-title">Robot Throwing <span class="gradient-text">&</span> "Catching"</h1>
                 <p class="hero-subtitle">Demonstrating dynamic manipulation with UR5e robot arms using reinforcement learning and trajectory optimization</p>
                 <div class="hero-buttons">
                     <a href="#demo" class="btn btn-primary">Watch Demo</a>
@@ -450,64 +450,78 @@ def _knots_to_traj(self, action, n_timesteps=30):
                 <span class="section-tag">Demonstration</span>
                 <h2 class="section-title">Live Demo</h2>
                 <p class="section-description">
-                    Watch our robot system in action - throwing and catching with precision
+                    Watch our robot system in action - comparing naive and learned throwing approaches
                 </p>
             </div>
 
             <div class="demo-container">
-                <div class="video-wrapper">
-                    <!-- Replace VIDEO_ID with your YouTube video ID -->
-                    <div class="video-placeholder">
-                        <div class="placeholder-content">
-                            <div class="placeholder-icon">🎥</div>
-                            <h3>Demo Video Coming Soon</h3>
-                            <p>Add your YouTube video ID in the HTML</p>
-                            <p class="placeholder-hint">Replace <code>VIDEO_ID</code> in the iframe src below</p>
-                        </div>
+                <!-- Naive Throw Video -->
+                <div class="demo-video-section">
+                    <h3 class="demo-video-title">Naive Throw</h3>
+                    <div class="video-wrapper">
+                        <iframe 
+                            src="https://www.youtube.com/embed/zNUaodvrQoY?rel=0" 
+                            title="Robot Naive Throwing Demo" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            allowfullscreen>
+                        </iframe>
                     </div>
-                    <!-- Uncomment and add your YouTube video ID -->
-                    <!-- <iframe 
-                        src="https://www.youtube.com/embed/VIDEO_ID" 
-                        title="Robot Throwing and Catching Demo" 
-                        frameborder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe> -->
+                    <p class="demo-video-description">
+                        Hard-defined throwing motion using linear interpolation between start and end poses
+                    </p>
                 </div>
 
-                <div class="demo-description">
-                    <h3>What You'll See</h3>
-                    <ul class="demo-features">
-                        <li>
-                            <span class="demo-icon">🎯</span>
-                            <div>
-                                <strong>Learned Throwing</strong>
-                                <p>RL-optimized trajectory executing smooth, accurate throws</p>
-                            </div>
-                        </li>
-                        <li>
-                            <span class="demo-icon">🤖</span>
-                            <div>
-                                <strong>Dynamic Catching</strong>
-                                <p>Real-time trajectory prediction and interception</p>
-                            </div>
-                        </li>
-                        <li>
-                            <span class="demo-icon">🔄</span>
-                            <div>
-                                <strong>Complete System</strong>
-                                <p>Full throwing and catching cycle demonstration</p>
-                            </div>
-                        </li>
-                        <li>
-                            <span class="demo-icon">📊</span>
-                            <div>
-                                <strong>Performance Metrics</strong>
-                                <p>Live velocity, position, and success rate data</p>
-                            </div>
-                        </li>
-                    </ul>
+                <!-- Learned Throw Video -->
+                <div class="demo-video-section">
+                    <h3 class="demo-video-title">Learned Throw</h3>
+                    <div class="video-wrapper">
+                        <iframe 
+                            src="https://www.youtube.com/embed/bRBkdSj29nI?rel=0" 
+                            title="Robot Learned Throwing Demo" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <p class="demo-video-description">
+                        Pseudo RL-optimized trajectory using PPO with cubic spline interpolation
+                    </p>
                 </div>
+            </div>
+
+            <div class="demo-description">
+                <h3>What You'll See</h3>
+                <ul class="demo-features">
+                    <li>
+                        <span class="demo-icon">🎯</span>
+                        <div>
+                            <strong>Learned Throwing</strong>
+                            <p>RL-optimized trajectory executing smooth, accurate throws</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="demo-icon">🤖</span>
+                        <div>
+                            <strong>Dynamic Catching</strong>
+                            <p>Real-time trajectory prediction and interception</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="demo-icon">🔄</span>
+                        <div>
+                            <strong>Complete System</strong>
+                            <p>Full throwing and catching cycle demonstration</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="demo-icon">📊</span>
+                        <div>
+                            <strong>Performance Metrics</strong>
+                            <p>Live velocity, position, and success rate data</p>
+                        </div>
+                    </li>
+                </ul>
             </div>
         </div>
     </section>
@@ -529,8 +543,7 @@ def _knots_to_traj(self, action, n_timesteps=30):
                     <div class="team-avatar">
                         <div class="avatar-placeholder">👤</div>
                     </div>
-                    <h3>Team Member 1</h3>
-                    <p class="team-role">Role / Focus Area</p>
+                    <h3>Aaron Yuan</h3>
                     <div class="team-links">
                         <a href="#" target="_blank" title="GitHub">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -549,8 +562,7 @@ def _knots_to_traj(self, action, n_timesteps=30):
                     <div class="team-avatar">
                         <div class="avatar-placeholder">👤</div>
                     </div>
-                    <h3>Team Member 2</h3>
-                    <p class="team-role">Role / Focus Area</p>
+                    <h3>Felix Zhu</h3>
                     <div class="team-links">
                         <a href="#" target="_blank" title="GitHub">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -564,13 +576,11 @@ def _knots_to_traj(self, action, n_timesteps=30):
                         </a>
                     </div>
                 </div>
-
-                <!-- Add more team members as needed -->
             </div>
 
             <div class="acknowledgments">
                 <h3>Acknowledgments</h3>
-                <p>This project was completed as part of CS 639: Robot Learning. We thank our instructors and TAs for their guidance and support throughout the semester.</p>
+                <p>This project was completed as part of CS 639: Intro to Robotic Systems final project. Thank you to Mike Hagenow!</p>
             </div>
         </div>
     </section>
@@ -581,7 +591,7 @@ def _knots_to_traj(self, action, n_timesteps=30):
             <div class="footer-content">
                 <div class="footer-brand">
                     <span class="brand-icon">🤖</span>
-                    <span>Robotic Throwing & Catching</span>
+                    <span>Robot Throwing & "Catching"</span>
                 </div>
                 <div class="footer-links">
                     <a href="https://github.com/ayuan1114/robo-final-proj" target="_blank">GitHub Repository</a>
@@ -590,11 +600,130 @@ def _knots_to_traj(self, action, n_timesteps=30):
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 CS 639 Final Project. Built with ❤️ for Robot Learning.</p>
+                <p>&copy; 2025 CS 639 Final Project. Built with a ❤️ for Robotic Systems.</p>
             </div>
         </div>
     </footer>
 
     <script src="js/script.js"></script>
 </body>
+<style>
+    /* Demo video section styles */
+    .demo-container {
+        display: flex;
+        flex-direction: column;
+        gap: 3rem;
+        margin-bottom: 4rem;
+    }
+    
+    .demo-video-section {
+        width: 100%;
+    }
+    
+    .demo-video-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #1a1a1a;
+    }
+    
+    .video-wrapper {
+        position: relative;
+        width: 100%;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        height: 0;
+        overflow: hidden;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .video-wrapper iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+    }
+    
+    .demo-video-description {
+        margin-top: 1rem;
+        font-size: 0.95rem;
+        color: #666;
+        text-align: center;
+    }
+    
+    .demo-description {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    .demo-description h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: #1a1a1a;
+    }
+    
+    .demo-features {
+        list-style: none;
+        padding: 0;
+        display: grid;
+        gap: 1.5rem;
+    }
+    
+    .demo-features li {
+        display: flex;
+        gap: 1rem;
+        align-items: start;
+    }
+    
+    .demo-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .demo-features strong {
+        display: block;
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+        color: #1a1a1a;
+    }
+    
+    .demo-features p {
+        margin: 0;
+        color: #666;
+        font-size: 0.95rem;
+    }
+    
+    /* Responsive design */
+    @media (min-width: 768px) {
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        
+        .demo-description {
+            grid-column: 1 / -1;
+        }
+    }
+    
+    @media (max-width: 767px) {
+        .demo-video-title {
+            font-size: 1.25rem;
+        }
+        
+        .demo-description {
+            padding: 1.5rem;
+        }
+        
+        .demo-features {
+            gap: 1rem;
+        }
+    }
+    </style>
 </html>

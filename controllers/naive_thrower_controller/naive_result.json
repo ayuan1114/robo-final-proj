@@ -1,21 +1,17 @@
 {
   "controller": "naive_thrower",
-  "total_timesteps": 245,
+  "total_timesteps": 252,
   "block_released": true,
-  "block_released_time": 245,
-  "release_velocity_z": 1.0448807271083806,
-  "release_velocity_hor": 1.4572798846241055,
-  "success": true,
-  "final_distance": -1.565122779543332,
-  "position_at_checkpoint": [
-    -0.6767611427036695,
-    2.712581455711358,
-    1.1979469688581283
-  ],
+  "block_released_time": 252,
+  "release_velocity_z": 1.0448807271107061,
+  "release_velocity_hor": 1.4572798846217467,
+  "success": false,
+  "final_distance": -0.8525834550252567,
+  "position_at_checkpoint": null,
   "position_at_release": [
-    -0.5806071716577391,
-    0.2241049384605045,
-    0.12994696287157737
+    -0.580607171657969,
+    0.22410493846041257,
+    0.12994696287157947
   ],
   "final_arm_pos": [
     -0.7218312114997472,
@@ -23,8 +19,8 @@
     0.7634408849947815
   ],
   "final_block_pos": [
-    -2.0937749080093986,
-    0.6240208255040689,
-    0.005617377209530816
+    -1.3736312548148883,
+    0.5371725850097349,
+    0.0013412553723632925
   ]
 }
