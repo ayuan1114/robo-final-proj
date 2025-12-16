@@ -279,19 +279,19 @@ def _knots_to_traj(self, action, n_timesteps=30):
                     <h3 class="subsection-title">Training Progression</h3>
                     <div class="graph-grid">
                         <div class="graph-card">
-                            <h4>Horizontal Velocity Over Time</h4>
+                            <h4>Horizontal Velocity Progress</h4>
                             <div class="graph-wrapper">
                                 <img src="assets/graphs/knots_vel.png" alt="Velocity progress" class="graph-img" />
                             </div>
                         </div>
                         <div class="graph-card">
-                            <h4>Distance Over Time</h4>
+                            <h4>Final Distance Progress</h4>
                             <div class="graph-wrapper">
                                 <img src="assets/graphs/knots_dist.png" alt="Distance progress" class="graph-img" />
                             </div>
                         </div>
                         <div class="graph-card">
-                            <h4>Reward Over Time</h4>
+                            <h4>Reward Progress</h4>
                             <div class="graph-wrapper">
                                 <img src="assets/graphs/knots_reward.png" alt="Reward progress" class="graph-img" />
                             </div>
@@ -312,19 +312,19 @@ def _knots_to_traj(self, action, n_timesteps=30):
                         <div class="metric-icon">🔄</div>
                         <div class="metric-value" data-target="1000">0</div>
                         <div class="metric-label">Training Episodes</div>
-                        <div class="metric-description">Until convergence</div>
+                        <div class="metric-description">During experiments</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-icon">⚡</div>
                         <div class="metric-value" data-target="3.60">0</div>
-                        <div class="metric-label">Release Velocity (m/s)</div>
-                        <div class="metric-description">Horizontal speed</div>
+                        <div class="metric-label">Avg Velocity (m/s)</div>
+                        <div class="metric-description">Absolute release speed</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-icon">🎯</div>
                         <div class="metric-value" data-target="1.02">0</div>
                         <div class="metric-label">Avg Distance (m)</div>
-                        <div class="metric-description">Block travel distance</div>
+                        <div class="metric-description">Horizontal distance from release</div>
                     </div>
                 </div>
 
@@ -336,48 +336,48 @@ def _knots_to_traj(self, action, n_timesteps=30):
                             <thead>
                                 <tr>
                                     <th>Number of Knots</th>
-                                    <th>Final Success Rate</th>
                                     <th>Best Policy Distance</th>
                                     <th>Best Policy Velocity</th>
+                                    <th>Final Success Rate</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td><strong>Naive</strong></td>
-                                    <td>-</td>
                                     <td>1.57m</td>
                                     <td>1.79 m/s</td>
+                                    <td>-</td>
                                 </tr>
                                 <tr>
                                     <td><strong>2</strong></td>
+                                    <td><strong>1.77m</strong></td>
+                                    <td><strong>3.87 m/s</strong></td>
                                     <td>42.2%</td>
-                                    <td>1.77m</td>
-                                    <td>3.87 m/s</td>
                                 </tr>
                                 <tr>
                                     <td><strong>3</strong></td>
-                                    <td>23.2%</td>
                                     <td>1.65m</td>
                                     <td>3.81 m/s</td>
+                                    <td>23.2%</td>
                                 </tr>
                                 <tr>
                                     <td><strong>4</strong></td>
-                                    <td>46.2%</td>
                                     <td>1.65m</td>
                                     <td>3.80 m/s</td>
+                                    <td>46.2%</td>
                                 </tr>
                                 <tr>
                                     <td><strong>6</strong></td>
-                                    <td>59.0%</td>
                                     <td>1.62m</td>
                                     <td>2.93 m/s</td>
+                                    <td><strong>59.0%</strong></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <div class="comparison-section">
-                    <h3 class="subsection-title">Experiment Results</h3>
+                    <h3 class="subsection-title">Experimental Results</h3>
                     <div class="approach-text">
                         <h4>Learned vs. Naive</h4>
                         <p>
@@ -414,19 +414,19 @@ def _knots_to_traj(self, action, n_timesteps=30):
                     <h3 class="subsection-title">Training Progression</h3>
                     <div class="graph-grid">
                         <div class="graph-card">
-                            <h4>Horizontal Velocity Over Time</h4>
+                            <h4>Horizontal Velocity Progress</h4>
                             <div class="graph-wrapper">
                                 <img src="assets/graphs/seeds_vel.png" alt="Velocity progress" class="graph-img" />
                             </div>
                         </div>
                         <div class="graph-card">
-                            <h4>Distance Over Time</h4>
+                            <h4>Final Distance Progress</h4>
                             <div class="graph-wrapper">
                                 <img src="assets/graphs/seeds_dist.png" alt="Distance progress" class="graph-img" />
                             </div>
                         </div>
                         <div class="graph-card">
-                            <h4>Reward Over Time</h4>
+                            <h4>Reward Progress</h4>
                             <div class="graph-wrapper">
                                 <img src="assets/graphs/seeds_reward.png" alt="Reward progress" class="graph-img" />
                             </div>
